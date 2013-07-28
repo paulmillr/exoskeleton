@@ -15,3 +15,5 @@ Experiment in making better Backbone.js drop-in replacement.
 - extend adds __super__
 - Object.create(null) https://github.com/jashkenas/backbone/issues/1495
 - Builds for modern browsers (IE9+)
+
+minus emulateHTTP emulateJSON
