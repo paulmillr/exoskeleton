@@ -20,6 +20,15 @@ Well, [Chaplin](http://chaplinjs.org) passes all its tests with Scoliosis instea
 - [ ] Object.create(null) https://github.com/jashkenas/backbone/issues/1495
 - [ ] Builds for modern browsers (IE9+)
 
-## Removed features
+## Differences
 
-- emulateHTTP and emulateJSON.
+- In no-underscore environment, there are no underscore-inspired
+  Collection methods (each, pluck etc.), but there are ES5-inspired methods:
+  ```
+  ['forEach', 'map', 'filter', 'some', 'every', 'reduce', 'reduceRight',
+    'indexOf', 'lastIndexOf']
+  ```
+
+  Also, no underscore-inspired Model methods at all.
+
+- emulateHTTP and emulateJSON were removed
