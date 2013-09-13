@@ -21,6 +21,7 @@
     "jquery": "~2"
   },
   "devDependencies": {
+    "underscore": "~1.5.2",
     "qunit": "~1"
   },
   "license": "MIT",

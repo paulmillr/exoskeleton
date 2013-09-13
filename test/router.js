@@ -64,7 +64,7 @@ $(document).ready(function() {
       this.value = value;
     }
   };
-  _.bindAll(ExternalObject);
+  _.bindAll(ExternalObject, 'routingFunction');
 
   var Router = Backbone.Router.extend({
 
