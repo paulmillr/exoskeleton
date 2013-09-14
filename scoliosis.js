@@ -383,14 +383,15 @@ var Events = Backbone.Events = {
   // Tell this object to stop listening to either specific events ... or
   // to every object it's currently listening to.
   stopListening: function(obj, name, callback) {
-    var listeners = this._listeners;
-    if (!listeners) return this;
-    var deleteListener = !name && !callback;
-    if (typeof name === 'object') callback = this;
-    if (obj) (listeners = {})[obj._listenerId] = obj;
-    for (var id in listeners) {
-      listeners[id].off(name, callback, this);
-      if (deleteListener) delete this._listeners[id];
+    var listeningTo = this._listeningTo;
+    if (!listeningTo) return this;
+    var remove = !name && !callback;
+    if (!callback && typeof name === 'object') callback = this;
+    if (obj) (listeningTo = {})[obj._listenId] = obj;
+    for (var id in listeningTo) {
+      obj = listeningTo[id];
+      obj.off(name, callback, this);
+      if (remove || _.isEmpty(obj._events)) delete this._listeningTo[id];
     }
     return this;
   }
@@ -448,10 +449,10 @@ var listenMethods = {listenTo: 'on', listenToOnce: 'once'};
 Object.keys(listenMethods).forEach(function(method) {
   var implementation = listenMethods[method];
   Events[method] = function(obj, name, callback) {
-    var listeners = this._listeners || (this._listeners = {});
-    var id = obj._listenerId || (obj._listenerId = _.uniqueId('l'));
-    listeners[id] = obj;
-    if (typeof name === 'object') callback = this;
+    var listeningTo = this._listeningTo || (this._listeningTo = {});
+    var id = obj._listenId || (obj._listenId = _.uniqueId('l'));
+    listeningTo[id] = obj;
+    if (!callback && typeof name === 'object') callback = this;
     obj[implementation](name, callback, this);
     return this;
   };
@@ -478,7 +479,6 @@ var Model = Backbone.Model = function(attributes, options) {
   this.attributes = {};
   if (options.collection) this.collection = options.collection;
   if (options.parse) attrs = this.parse(attrs, options) || {};
-  options._attrs || (options._attrs = attrs);
   if (defaults = _.result(this, 'defaults')) {
     attrs = _.defaults({}, attrs, defaults);
   }
@@ -792,7 +792,7 @@ _.extend(Model.prototype, Events, {
     attrs = _.extend({}, this.attributes, attrs);
     var error = this.validationError = this.validate(attrs, options) || null;
     if (!error) return true;
-    this.trigger('invalid', this, error, _.extend(options || {}, {validationError: error}));
+    this.trigger('invalid', this, error, _.extend(options, {validationError: error}));
     return false;
   }
 
@@ -894,8 +894,9 @@ _.extend(Collection.prototype, Events, {
     options = _.defaults({}, options, setOptions);
     if (options.parse) models = this.parse(models, options);
     if (!Array.isArray(models)) models = models ? [models] : [];
-    var i, l, model, attrs, existing, sort;
+    var i, l, id, model, attrs, existing, sort;
     var at = options.at;
+    var targetModel = this.model;
     var sortable = this.comparator && (at == null) && options.sort !== false;
     var sortAttr = typeof this.comparator === 'string' ? this.comparator : null;
     var toAdd = [], toRemove = [], modelMap = {};
@@ -905,20 +906,27 @@ _.extend(Collection.prototype, Events, {
     // Turn bare objects into model references, and prevent invalid models
     // from being added.
     for (i = 0, l = models.length; i < l; i++) {
-      if (!(model = this._prepareModel(attrs = models[i], options))) continue;
+      attrs = models[i];
+      if (attrs instanceof Model) {
+        id = model = attrs;
+      } else {
+        id = attrs[targetModel.prototype.idAttribute];
+      }
 
       // If a duplicate is found, prevent it from being added and
       // optionally merge it into the existing model.
-      if (existing = this.get(model)) {
+      if (existing = this.get(id)) {
         if (remove) modelMap[existing.cid] = true;
         if (merge) {
-          attrs = attrs === model ? model.attributes : options._attrs;
+          attrs = attrs === model ? model.attributes : attrs;
+          if (options.parse) attrs = existing.parse(attrs, options);
           existing.set(attrs, options);
           if (sortable && !sort && existing.hasChanged(sortAttr)) sort = true;
         }
 
       // This is a new model, push it to the `toAdd` list.
       } else if (add) {
+        if (!(model = this._prepareModel(attrs, options))) continue;
         toAdd.push(model);
 
         // Listen to added models' events, and index models for lookup by
@@ -928,7 +936,6 @@ _.extend(Collection.prototype, Events, {
         if (model.id != null) this._byId[model.id] = model;
       }
       if (order) order.push(existing || model);
-      delete options._attrs;
     }
 
     // Remove nonexistent models if appropriate.
@@ -984,7 +991,6 @@ _.extend(Collection.prototype, Events, {
 
   // Add a model to the end of the collection.
   push: function(model, options) {
-    model = this._prepareModel(model, options);
     this.add(model, _.extend({at: this.length}, options));
     return model;
   },
@@ -998,7 +1004,6 @@ _.extend(Collection.prototype, Events, {
 
   // Add a model to the beginning of the collection.
   unshift: function(model, options) {
-    model = this._prepareModel(model, options);
     this.add(model, _.extend({at: 0}, options));
     return model;
   },
@@ -1062,19 +1067,9 @@ _.extend(Collection.prototype, Events, {
     return this;
   },
 
-  // Figure out the smallest index at which a model should be inserted so as
-  // to maintain order.
-  sortedIndex: function(model, value, context) {
-    value || (value = this.comparator);
-    var iterator = typeof value === 'function' ? value : function(model) {
-      return model.get(value);
-    };
-    return _.sortedIndex(this.models, model, iterator, context);
-  },
-
   // Pluck an attribute from each model in the collection.
   pluck: function(attr) {
-    return Object.keys(this.models).map(function(model) {
+    return this.models.map(function(model) {
       return model.get(attr);
     });
   },
@@ -1144,7 +1139,7 @@ _.extend(Collection.prototype, Events, {
     options.collection = this;
     var model = new this.model(attrs, options);
     if (!model.validationError) return model;
-    this.trigger('invalid', this, attrs, options);
+    this.trigger('invalid', this, model.validationError, options);
     return false;
   },
 
@@ -1315,12 +1310,12 @@ _.extend(View.prototype, Events, {
 
       var match = key.match(delegateEventSplitter);
       var eventName = match[1], selector = match[2];
-      var bound = method.bind(this);
+      method = method.bind(this);
       eventName += '.delegateEvents' + this.cid;
       if (selector === '') {
-        this.$el.on(eventName, bound);
+        this.$el.on(eventName, method);
       } else {
-        this.$el.on(eventName, selector, bound);
+        this.$el.on(eventName, selector, method);
       }
     }
     return this;
@@ -1343,8 +1338,7 @@ _.extend(View.prototype, Events, {
       var attrs = _.extend({}, _.result(this, 'attributes'));
       if (this.id) attrs.id = _.result(this, 'id');
       if (this.className) attrs['class'] = _.result(this, 'className');
-      var el = document.createElement(_.result(this, 'tagName'))
-      if (this.attributes) extend(el, _.result(this, 'attributes'));
+      var el = _.extend(document.createElement(_.result(this, 'tagName')), attrs);
       this.setElement(el, false);
     } else {
       this.setElement(_.result(this, 'el'), false);
