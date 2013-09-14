@@ -119,13 +119,17 @@ Backbone.$ = root.jQuery || root.Zepto || root.ender || root.$;
 
 var underscore = {};
 var _ = underscore;
+
+var arrayProto = [];
+var slice = arrayProto.slice;
+
 underscore.result = function result(object, property) {
   var value = object ? object[property] : undefined;
   return typeof value === 'function' ? object[property]() : value;
 };
 
 underscore.defaults = function defaults(obj, from1, from2) {
-  Array.prototype.slice.call(arguments, 1).forEach(function(item) {
+  slice.call(arguments, 1).forEach(function(item) {
     for (var key in item) if (obj[key] === undefined)
       obj[key] = item[key];
   });
@@ -133,7 +137,7 @@ underscore.defaults = function defaults(obj, from1, from2) {
 };
 
 underscore.extend = function extend(obj) {
-  Array.prototype.slice.call(arguments, 1).forEach(function(item) {
+  slice.call(arguments, 1).forEach(function(item) {
     for (var key in item) obj[key] = item[key];
   });
   return obj;
@@ -190,6 +194,43 @@ underscore.sortedIndex = function sortedIndex(array, obj, iterator, context) {
     iterator.call(context, array[mid]) < value ? low = mid + 1 : high = mid;
   }
   return low;
+};
+
+underscore.first = function(array, n, guard) {
+  if (array == null) return void 0;
+  return (n == null) || guard ? array[0] : slice.call(array, 0, n);
+};
+
+underscore.last = function(array, n, guard) {
+  if (array == null) return void 0;
+  if ((n == null) || guard) {
+    return array[array.length - 1];
+  } else {
+    return slice.call(array, Math.max(array.length - n, 0));
+  }
+};
+
+underscore.pluck = function(obj, key) {
+  return obj.map(function(value){ return value[key]; });
+};
+
+underscore.sortBy = function(obj, value, context) {
+  var iterator = typeof value === 'function' ? value : function(obj){ return obj[value]; };
+  return _.pluck(obj.map(function(value, index, list) {
+    return {
+      value: value,
+      index: index,
+      criteria: iterator.call(context, value, index, list)
+    };
+  }).sort(function(left, right) {
+    var a = left.criteria;
+    var b = right.criteria;
+    if (a !== b) {
+      if (a > b || a === void 0) return 1;
+      if (a < b || b === void 0) return -1;
+    }
+    return left.index - right.index;
+  }), 'value');
 };
 
 /** Used to generate unique IDs */
@@ -1206,6 +1247,29 @@ if (_.each) {
       return Array.prototype[method].call(this.models, arg, context);
     };
   });
+
+  [
+    'first', 'last'
+  ].forEach(function(method) {
+    Collection.prototype[method] = function() {
+      var args = slice.call(arguments);
+      args.unshift(this.models);
+      return _[method].apply(_, args);
+    }
+  });
+
+  // Underscore methods that take a property name as an argument.
+  var attributeMethods = ['sortBy'];
+
+  // Use attributes instead of properties.
+  attributeMethods.forEach(function(method) {
+    Collection.prototype[method] = function(value, context) {
+      var iterator = typeof value === 'function' ? value : function(model) {
+        return model.get(value);
+      };
+      return _[method](this.models, iterator, context);
+    };
+  });
 }
 // Backbone.View
 // -------------
@@ -1337,7 +1401,7 @@ _.extend(View.prototype, Events, {
     if (!this.el) {
       var attrs = _.extend({}, _.result(this, 'attributes'));
       if (this.id) attrs.id = _.result(this, 'id');
-      if (this.className) attrs['class'] = _.result(this, 'className');
+      if (this.className) attrs.className = _.result(this, 'className');
       var el = _.extend(document.createElement(_.result(this, 'tagName')), attrs);
       this.setElement(el, false);
     } else {

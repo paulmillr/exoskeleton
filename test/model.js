@@ -110,15 +110,16 @@ $(document).ready(function() {
     equal(model.url(), '/nested/1/collection/2');
   });
 
-  test("underscore methods", 5, function() {
-    var model = new Backbone.Model({ 'foo': 'a', 'bar': 'b', 'baz': 'c' });
-    var model2 = model.clone();
-    deepEqual(model.keys(), ['foo', 'bar', 'baz']);
-    deepEqual(model.values(), ['a', 'b', 'c']);
-    deepEqual(model.invert(), { 'a': 'foo', 'b': 'bar', 'c': 'baz' });
-    deepEqual(model.pick('foo', 'baz'), {'foo': 'a', 'baz': 'c'});
-    deepEqual(model.omit('foo', 'bar'), {'baz': 'c'});
-  });
+  // scoliosis only supports these if underscore included. Otherwise use native
+  // test("underscore methods", 5, function() {
+  //   var model = new Backbone.Model({ 'foo': 'a', 'bar': 'b', 'baz': 'c' });
+  //   var model2 = model.clone();
+  //   deepEqual(model.keys(), ['foo', 'bar', 'baz']);
+  //   deepEqual(model.values(), ['a', 'b', 'c']);
+  //   deepEqual(model.invert(), { 'a': 'foo', 'b': 'bar', 'c': 'baz' });
+  //   deepEqual(model.pick('foo', 'baz'), {'foo': 'a', 'baz': 'c'});
+  //   deepEqual(model.omit('foo', 'bar'), {'baz': 'c'});
+  // });
 
   test("clone", 10, function() {
     var a = new Backbone.Model({ 'foo': 1, 'bar': 2, 'baz': 3});
