@@ -16,7 +16,7 @@ $(document).ready(function() {
 
   test("constructor", 3, function() {
     equal(view.el.id, 'test-view');
-    equal(view.el.className, 'test-view');
+    equal(view.el['class'], 'test-view');
     equal(view.el.other, void 0);
   });
 
@@ -149,7 +149,7 @@ $(document).ready(function() {
       }
     });
 
-    strictEqual(new View().el.className, 'className');
+    strictEqual(new View().el['class'], 'className');
     strictEqual(new View().el.id, 'id');
   });
 
@@ -161,7 +161,7 @@ $(document).ready(function() {
       }
     });
 
-    strictEqual(new View().el.className, 'class');
+    strictEqual(new View().el['class'], 'class');
     strictEqual(new View().el.id, 'id');
   });
 
@@ -172,7 +172,7 @@ $(document).ready(function() {
       }
     });
 
-    strictEqual(new View().el.className, 'dynamic');
+    strictEqual(new View().el['class'], 'dynamic');
   });
 
   test("multiple views per element", 3, function() {
