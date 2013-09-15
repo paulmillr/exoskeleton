@@ -937,7 +937,6 @@ _.extend(Collection.prototype, Events, {
     if (!Array.isArray(models)) models = models ? [models] : [];
     var i, l, id, model, attrs, existing, sort;
     var at = options.at;
-    var targetModel = this.model;
     var sortable = this.comparator && (at == null) && options.sort !== false;
     var sortAttr = typeof this.comparator === 'string' ? this.comparator : null;
     var toAdd = [], toRemove = [], modelMap = {};
@@ -947,27 +946,20 @@ _.extend(Collection.prototype, Events, {
     // Turn bare objects into model references, and prevent invalid models
     // from being added.
     for (i = 0, l = models.length; i < l; i++) {
-      attrs = models[i];
-      if (attrs instanceof Model) {
-        id = model = attrs;
-      } else {
-        id = attrs[targetModel.prototype.idAttribute];
-      }
+      if (!(model = this._prepareModel(attrs = models[i], options))) continue;
 
       // If a duplicate is found, prevent it from being added and
       // optionally merge it into the existing model.
-      if (existing = this.get(id)) {
+      if (existing = this.get(model)) {
         if (remove) modelMap[existing.cid] = true;
         if (merge) {
-          attrs = attrs === model ? model.attributes : attrs;
-          if (options.parse) attrs = existing.parse(attrs, options);
+          attrs = attrs === model ? model.attributes : options._attrs;
           existing.set(attrs, options);
           if (sortable && !sort && existing.hasChanged(sortAttr)) sort = true;
         }
 
       // This is a new model, push it to the `toAdd` list.
       } else if (add) {
-        if (!(model = this._prepareModel(attrs, options))) continue;
         toAdd.push(model);
 
         // Listen to added models' events, and index models for lookup by
@@ -977,6 +969,7 @@ _.extend(Collection.prototype, Events, {
         if (model.id != null) this._byId[model.id] = model;
       }
       if (order) order.push(existing || model);
+      delete options._attrs;
     }
 
     // Remove nonexistent models if appropriate.

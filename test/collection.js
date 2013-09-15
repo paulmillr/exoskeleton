@@ -482,56 +482,46 @@ $(document).ready(function() {
     equal(JSON.stringify(col), '[{"id":3,"label":"a"},{"id":2,"label":"b"},{"id":1,"label":"c"},{"id":0,"label":"d"}]');
   });
 
-  test("where and findWhere", 8, function() {
-    var model = new Backbone.Model({a: 1});
-    var coll = new Backbone.Collection([
-      model,
-      {a: 1},
-      {a: 1, b: 2},
-      {a: 2, b: 2},
-      {a: 3}
-    ]);
-    equal(coll.where({a: 1}).length, 3);
-    equal(coll.where({a: 2}).length, 1);
-    equal(coll.where({a: 3}).length, 1);
-    equal(coll.where({b: 1}).length, 0);
-    equal(coll.where({b: 2}).length, 2);
-    equal(coll.where({a: 1, b: 2}).length, 1);
-    equal(coll.findWhere({a: 1}), model);
-    equal(coll.findWhere({a: 4}), void 0);
-  });
+  // Not implemented in Scoliosis
+  // test("where and findWhere", 8, function() {
+  //   var model = new Backbone.Model({a: 1});
+  //   var coll = new Backbone.Collection([
+  //     model,
+  //     {a: 1},
+  //     {a: 1, b: 2},
+  //     {a: 2, b: 2},
+  //     {a: 3}
+  //   ]);
+  //   equal(coll.where({a: 1}).length, 3);
+  //   equal(coll.where({a: 2}).length, 1);
+  //   equal(coll.where({a: 3}).length, 1);
+  //   equal(coll.where({b: 1}).length, 0);
+  //   equal(coll.where({b: 2}).length, 2);
+  //   equal(coll.where({a: 1, b: 2}).length, 1);
+  //   equal(coll.findWhere({a: 1}), model);
+  //   equal(coll.findWhere({a: 4}), void 0);
+  // });
 
-  test("Underscore methods", 14, function() {
+  test("Underscore methods", 4, function() {
     equal(col.map(function(model){ return model.get('label'); }).join(' '), 'a b c d');
-    equal(col.any(function(model){ return model.id === 100; }), false);
-    equal(col.any(function(model){ return model.id === 0; }), true);
+    equal(col.some(function(model){ return model.id === 100; }), false);
+    equal(col.some(function(model){ return model.id === 0; }), true);
     equal(col.indexOf(b), 1);
-    equal(col.size(), 4);
-    equal(col.rest().length, 3);
-    ok(!_.include(col.rest(), a));
-    ok(_.include(col.rest(), d));
-    ok(!col.isEmpty());
-    ok(!_.include(col.without(d), d));
-    equal(col.max(function(model){ return model.id; }).id, 3);
-    equal(col.min(function(model){ return model.id; }).id, 0);
-    deepEqual(col.chain()
-            .filter(function(o){ return o.id % 2 === 0; })
-            .map(function(o){ return o.id * 2; })
-            .value(),
-         [4, 0]);
-    deepEqual(col.difference([c, d]), [a, b]);
-  });
-
-  test("sortedIndex", function () {
-    var model = new Backbone.Model({key: 2});
-    var collection = new (Backbone.Collection.extend({
-      comparator: 'key'
-    }))([model, {key: 1}]);
-    equal(collection.sortedIndex(model), 1);
-    equal(collection.sortedIndex(model, 'key'), 1);
-    equal(collection.sortedIndex(model, function (model) {
-      return model.get('key');
-    }), 1);
+    // Not included in Scoliosis
+    // equal(col.size(), 4);
+    // equal(col.rest().length, 3);
+    // ok(!_.include(col.rest(), a));
+    // ok(_.include(col.rest(), d));
+    // ok(!col.isEmpty());
+    // ok(!_.include(col.without(d), d));
+    // equal(col.max(function(model){ return model.id; }).id, 3);
+    // equal(col.min(function(model){ return model.id; }).id, 0);
+    // deepEqual(col.chain()
+    //         .filter(function(o){ return o.id % 2 === 0; })
+    //         .map(function(o){ return o.id * 2; })
+    //         .value(),
+    //      [4, 0]);
+    // deepEqual(col.difference([c, d]), [a, b]);
   });
 
   test("reset", 12, function() {
@@ -578,7 +568,7 @@ $(document).ready(function() {
     var col = new (Backbone.Collection.extend({ model: Model }))();
     col.reset([{ astring: "green", anumber: 1 }, { astring: "blue", anumber: 2 }], { model_parameter: 'model parameter' });
     equal(col.length, 2);
-    col.each(function(model) {
+    col.forEach(function(model) {
       equal(model.model_parameter, 'model parameter');
     });
   });
@@ -758,13 +748,14 @@ $(document).ready(function() {
     deepEqual(collection.pluck('id'), [2, 1]);
   });
 
-  test("#1655 - groupBy can be used with a string argument.", 3, function() {
-    var collection = new Backbone.Collection([{x: 1}, {x: 2}]);
-    var grouped = collection.groupBy('x');
-    strictEqual(_.keys(grouped).length, 2);
-    strictEqual(grouped[1][0].get('x'), 1);
-    strictEqual(grouped[2][0].get('x'), 2);
-  });
+  // Not implemented in Scoliosis
+  // test("#1655 - groupBy can be used with a string argument.", 3, function() {
+  //   var collection = new Backbone.Collection([{x: 1}, {x: 2}]);
+  //   var grouped = collection.groupBy('x');
+  //   strictEqual(_.keys(grouped).length, 2);
+  //   strictEqual(grouped[1][0].get('x'), 1);
+  //   strictEqual(grouped[2][0].get('x'), 2);
+  // });
 
   test("#1655 - sortBy can be used with a string argument.", 1, function() {
     var collection = new Backbone.Collection([{x: 3}, {x: 1}, {x: 2}]);
