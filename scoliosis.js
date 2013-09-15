@@ -119,13 +119,17 @@ Backbone.$ = root.jQuery || root.Zepto || root.ender || root.$;
 
 var underscore = {};
 var _ = underscore;
+
+var arrayProto = [];
+var slice = arrayProto.slice;
+
 underscore.result = function result(object, property) {
   var value = object ? object[property] : undefined;
   return typeof value === 'function' ? object[property]() : value;
 };
 
 underscore.defaults = function defaults(obj, from1, from2) {
-  Array.prototype.slice.call(arguments, 1).forEach(function(item) {
+  slice.call(arguments, 1).forEach(function(item) {
     for (var key in item) if (obj[key] === undefined)
       obj[key] = item[key];
   });
@@ -133,7 +137,7 @@ underscore.defaults = function defaults(obj, from1, from2) {
 };
 
 underscore.extend = function extend(obj) {
-  Array.prototype.slice.call(arguments, 1).forEach(function(item) {
+  slice.call(arguments, 1).forEach(function(item) {
     for (var key in item) obj[key] = item[key];
   });
   return obj;
@@ -190,6 +194,43 @@ underscore.sortedIndex = function sortedIndex(array, obj, iterator, context) {
     iterator.call(context, array[mid]) < value ? low = mid + 1 : high = mid;
   }
   return low;
+};
+
+underscore.first = function(array, n, guard) {
+  if (array == null) return void 0;
+  return (n == null) || guard ? array[0] : slice.call(array, 0, n);
+};
+
+underscore.last = function(array, n, guard) {
+  if (array == null) return void 0;
+  if ((n == null) || guard) {
+    return array[array.length - 1];
+  } else {
+    return slice.call(array, Math.max(array.length - n, 0));
+  }
+};
+
+underscore.pluck = function(obj, key) {
+  return obj.map(function(value){ return value[key]; });
+};
+
+underscore.sortBy = function(obj, value, context) {
+  var iterator = typeof value === 'function' ? value : function(obj){ return obj[value]; };
+  return _.pluck(obj.map(function(value, index, list) {
+    return {
+      value: value,
+      index: index,
+      criteria: iterator.call(context, value, index, list)
+    };
+  }).sort(function(left, right) {
+    var a = left.criteria;
+    var b = right.criteria;
+    if (a !== b) {
+      if (a > b || a === void 0) return 1;
+      if (a < b || b === void 0) return -1;
+    }
+    return left.index - right.index;
+  }), 'value');
 };
 
 /** Used to generate unique IDs */
@@ -383,14 +424,15 @@ var Events = Backbone.Events = {
   // Tell this object to stop listening to either specific events ... or
   // to every object it's currently listening to.
   stopListening: function(obj, name, callback) {
-    var listeners = this._listeners;
-    if (!listeners) return this;
-    var deleteListener = !name && !callback;
-    if (typeof name === 'object') callback = this;
-    if (obj) (listeners = {})[obj._listenerId] = obj;
-    for (var id in listeners) {
-      listeners[id].off(name, callback, this);
-      if (deleteListener) delete this._listeners[id];
+    var listeningTo = this._listeningTo;
+    if (!listeningTo) return this;
+    var remove = !name && !callback;
+    if (!callback && typeof name === 'object') callback = this;
+    if (obj) (listeningTo = {})[obj._listenId] = obj;
+    for (var id in listeningTo) {
+      obj = listeningTo[id];
+      obj.off(name, callback, this);
+      if (remove || _.isEmpty(obj._events)) delete this._listeningTo[id];
     }
     return this;
   }
@@ -448,10 +490,10 @@ var listenMethods = {listenTo: 'on', listenToOnce: 'once'};
 Object.keys(listenMethods).forEach(function(method) {
   var implementation = listenMethods[method];
   Events[method] = function(obj, name, callback) {
-    var listeners = this._listeners || (this._listeners = {});
-    var id = obj._listenerId || (obj._listenerId = _.uniqueId('l'));
-    listeners[id] = obj;
-    if (typeof name === 'object') callback = this;
+    var listeningTo = this._listeningTo || (this._listeningTo = {});
+    var id = obj._listenId || (obj._listenId = _.uniqueId('l'));
+    listeningTo[id] = obj;
+    if (!callback && typeof name === 'object') callback = this;
     obj[implementation](name, callback, this);
     return this;
   };
@@ -478,7 +520,6 @@ var Model = Backbone.Model = function(attributes, options) {
   this.attributes = {};
   if (options.collection) this.collection = options.collection;
   if (options.parse) attrs = this.parse(attrs, options) || {};
-  options._attrs || (options._attrs = attrs);
   if (defaults = _.result(this, 'defaults')) {
     attrs = _.defaults({}, attrs, defaults);
   }
@@ -792,7 +833,7 @@ _.extend(Model.prototype, Events, {
     attrs = _.extend({}, this.attributes, attrs);
     var error = this.validationError = this.validate(attrs, options) || null;
     if (!error) return true;
-    this.trigger('invalid', this, error, _.extend(options || {}, {validationError: error}));
+    this.trigger('invalid', this, error, _.extend(options, {validationError: error}));
     return false;
   }
 
@@ -894,7 +935,7 @@ _.extend(Collection.prototype, Events, {
     options = _.defaults({}, options, setOptions);
     if (options.parse) models = this.parse(models, options);
     if (!Array.isArray(models)) models = models ? [models] : [];
-    var i, l, model, attrs, existing, sort;
+    var i, l, id, model, attrs, existing, sort;
     var at = options.at;
     var sortable = this.comparator && (at == null) && options.sort !== false;
     var sortAttr = typeof this.comparator === 'string' ? this.comparator : null;
@@ -984,7 +1025,6 @@ _.extend(Collection.prototype, Events, {
 
   // Add a model to the end of the collection.
   push: function(model, options) {
-    model = this._prepareModel(model, options);
     this.add(model, _.extend({at: this.length}, options));
     return model;
   },
@@ -998,7 +1038,6 @@ _.extend(Collection.prototype, Events, {
 
   // Add a model to the beginning of the collection.
   unshift: function(model, options) {
-    model = this._prepareModel(model, options);
     this.add(model, _.extend({at: 0}, options));
     return model;
   },
@@ -1062,19 +1101,9 @@ _.extend(Collection.prototype, Events, {
     return this;
   },
 
-  // Figure out the smallest index at which a model should be inserted so as
-  // to maintain order.
-  sortedIndex: function(model, value, context) {
-    value || (value = this.comparator);
-    var iterator = typeof value === 'function' ? value : function(model) {
-      return model.get(value);
-    };
-    return _.sortedIndex(this.models, model, iterator, context);
-  },
-
   // Pluck an attribute from each model in the collection.
   pluck: function(attr) {
-    return Object.keys(this.models).map(function(model) {
+    return this.models.map(function(model) {
       return model.get(attr);
     });
   },
@@ -1144,7 +1173,7 @@ _.extend(Collection.prototype, Events, {
     options.collection = this;
     var model = new this.model(attrs, options);
     if (!model.validationError) return model;
-    this.trigger('invalid', this, attrs, options);
+    this.trigger('invalid', this, model.validationError, options);
     return false;
   },
 
@@ -1209,6 +1238,29 @@ if (_.each) {
   ].forEach(function(method) {
     Collection.prototype[method] = function(arg, context) {
       return Array.prototype[method].call(this.models, arg, context);
+    };
+  });
+
+  [
+    'first', 'last'
+  ].forEach(function(method) {
+    Collection.prototype[method] = function() {
+      var args = slice.call(arguments);
+      args.unshift(this.models);
+      return _[method].apply(_, args);
+    }
+  });
+
+  // Underscore methods that take a property name as an argument.
+  var attributeMethods = ['sortBy'];
+
+  // Use attributes instead of properties.
+  attributeMethods.forEach(function(method) {
+    Collection.prototype[method] = function(value, context) {
+      var iterator = typeof value === 'function' ? value : function(model) {
+        return model.get(value);
+      };
+      return _[method](this.models, iterator, context);
     };
   });
 }
@@ -1315,12 +1367,12 @@ _.extend(View.prototype, Events, {
 
       var match = key.match(delegateEventSplitter);
       var eventName = match[1], selector = match[2];
-      var bound = method.bind(this);
+      method = method.bind(this);
       eventName += '.delegateEvents' + this.cid;
       if (selector === '') {
-        this.$el.on(eventName, bound);
+        this.$el.on(eventName, method);
       } else {
-        this.$el.on(eventName, selector, bound);
+        this.$el.on(eventName, selector, method);
       }
     }
     return this;
@@ -1342,9 +1394,8 @@ _.extend(View.prototype, Events, {
     if (!this.el) {
       var attrs = _.extend({}, _.result(this, 'attributes'));
       if (this.id) attrs.id = _.result(this, 'id');
-      if (this.className) attrs['class'] = _.result(this, 'className');
-      var el = document.createElement(_.result(this, 'tagName'))
-      if (this.attributes) extend(el, _.result(this, 'attributes'));
+      if (this.className) attrs.className = _.result(this, 'className');
+      var el = _.extend(document.createElement(_.result(this, 'tagName')), attrs);
       this.setElement(el, false);
     } else {
       this.setElement(_.result(this, 'el'), false);

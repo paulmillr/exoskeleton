@@ -1,0 +1,35 @@
+{
+  "name": "scoliosis",
+  "main": "scoliosis.js",
+  "version": "0.0.1",
+  "homepage": "https://github.com/paulmillr/scoliosis",
+  "authors": [
+    "Paul Millr <paul+gh@paulmillr.com>"
+  ],
+  "description": "Experiment in making better Backbone.js drop-in replacement.",
+  "keywords": [
+    "Backbone",
+    "Scoliosis",
+    "MVC",
+    "client",
+    "browser",
+    "model",
+    "view",
+    "controller"
+  ],
+  "dependencies": {
+    "jquery": "~2"
+  },
+  "devDependencies": {
+    "underscore": "~1.5.2",
+    "qunit": "~1"
+  },
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
