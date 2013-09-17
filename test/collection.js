@@ -1,4 +1,4 @@
-$(document).ready(function() {
+(function() {
 
   var a, b, c, d, e, col, otherCol;
 
@@ -225,13 +225,13 @@ $(document).ready(function() {
   });
 
   test("add with parse and merge", function() {
-    var Model = Backbone.Model.extend({
-      parse: function (data) {
-        return data.model;
-      }
-    });
     var collection = new Backbone.Collection();
-    collection.model = Model;
+    collection.parse = function(attrs) {
+      return _.map(attrs, function(model) {
+        if (model.model) return model.model;
+        return model;
+      });
+    };
     collection.add({id: 1});
     collection.add({model: {id: 1, name: 'Alf'}}, {parse: true, merge: true});
     equal(collection.first().get('name'), 'Alf');
@@ -437,7 +437,7 @@ $(document).ready(function() {
     equal(model.collection, collection);
   });
 
-  test("create with validate:true enforces validation", 2, function() {
+  test("create with validate:true enforces validation", 3, function() {
     var ValidatingModel = Backbone.Model.extend({
       validate: function(attrs) {
         return "fail";
@@ -447,7 +447,8 @@ $(document).ready(function() {
       model: ValidatingModel
     });
     var col = new ValidatingCollection();
-    col.on('invalid', function (collection, attrs, options) {
+    col.on('invalid', function (collection, error, options) {
+      equal(error, "fail");
       equal(options.validationError, 'fail');
     });
     equal(col.create({"foo":"bar"}, {validate:true}), false);
@@ -977,12 +978,10 @@ $(document).ready(function() {
   });
 
   test("`set` and model level `parse`", function() {
-    var Model = Backbone.Model.extend({
-      parse: function (res) { return res.model; }
-    });
+    var Model = Backbone.Model.extend({});
     var Collection = Backbone.Collection.extend({
       model: Model,
-      parse: function (res) { return res.models; }
+      parse: function (res) { return _.pluck(res.models, 'model'); }
     });
     var model = new Model({id: 1});
     var collection = new Collection(model);
@@ -1142,4 +1141,86 @@ $(document).ready(function() {
     this.ajaxSettings.success('response');
   });
 
-});
+  test("#2612 - nested `parse` works with `Collection#set`", function() {
+
+    var Job = Backbone.Model.extend({
+      constructor: function() {
+        this.items = new Items();
+        Backbone.Model.apply(this, arguments);
+      },
+      parse: function(attrs) {
+        this.items.set(attrs.items, {parse: true});
+        return _.omit(attrs, 'items');
+      }
+    });
+
+    var Item = Backbone.Model.extend({
+      constructor: function() {
+        this.subItems = new Backbone.Collection();
+        Backbone.Model.apply(this, arguments);
+      },
+      parse: function(attrs) {
+        this.subItems.set(attrs.subItems, {parse: true});
+        return _.omit(attrs, 'subItems');
+      }
+    });
+
+    var Items = Backbone.Collection.extend({
+      model: Item
+    });
+
+    var data = {
+      name: 'JobName',
+      id: 1,
+      items: [{
+        id: 1,
+        name: 'Sub1',
+        subItems: [
+          {id: 1, subName: 'One'},
+          {id: 2, subName: 'Two'}
+        ]
+      }, {
+        id: 2,
+        name: 'Sub2',
+        subItems: [
+          {id: 3, subName: 'Three'},
+          {id: 4, subName: 'Four'}
+        ]
+      }]
+    };
+
+    var newData = {
+      name: 'NewJobName',
+      id: 1,
+      items: [{
+        id: 1,
+        name: 'NewSub1',
+        subItems: [
+          {id: 1,subName: 'NewOne'},
+          {id: 2,subName: 'NewTwo'}
+        ]
+      }, {
+        id: 2,
+        name: 'NewSub2',
+        subItems: [
+          {id: 3,subName: 'NewThree'},
+          {id: 4,subName: 'NewFour'}
+        ]
+      }]
+    };
+
+    var job = new Job(data, {parse: true});
+    equal(job.get('name'), 'JobName');
+    equal(job.items.at(0).get('name'), 'Sub1');
+    equal(job.items.length, 2);
+    equal(job.items.get(1).subItems.get(1).get('subName'), 'One');
+    equal(job.items.get(2).subItems.get(3).get('subName'), 'Three');
+    job.set(job.parse(newData, {parse: true}));
+    equal(job.get('name'), 'NewJobName');
+    equal(job.items.at(0).get('name'), 'NewSub1');
+    equal(job.items.length, 2);
+    equal(job.items.get(1).subItems.get(1).get('subName'), 'NewOne');
+    equal(job.items.get(2).subItems.get(3).get('subName'), 'NewThree');
+  });
+
+})();
