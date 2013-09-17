@@ -1,4 +1,4 @@
-$(document).ready(function() {
+(function() {
 
   var view;
 
@@ -161,7 +161,7 @@ $(document).ready(function() {
       }
     });
 
-    strictEqual(new View().el['class'], 'class');
+    strictEqual(new View().el.className, 'class');
     strictEqual(new View().el.id, 'id');
   });
 
@@ -172,7 +172,7 @@ $(document).ready(function() {
       }
     });
 
-    strictEqual(new View().el['class'], 'dynamic');
+    strictEqual(new View().el.className, 'dynamic');
   });
 
   test("multiple views per element", 3, function() {
@@ -218,7 +218,7 @@ $(document).ready(function() {
     $('body').trigger('fake$event').trigger('fake$event');
     equal(count, 2);
 
-    $('body').unbind('.namespaced');
+    $('body').off('.namespaced');
     $('body').trigger('fake$event');
     equal(count, 2);
   });
@@ -292,7 +292,7 @@ $(document).ready(function() {
     view.collection.trigger('x');
   });
 
-  test("Provide function for el.", 1, function() {
+  test("Provide function for el.", 2, function() {
     var View = Backbone.View.extend({
       el: function() {
         return "<p><a></a></p>";
@@ -300,7 +300,8 @@ $(document).ready(function() {
     });
 
     var view = new View;
-    ok(view.$el.is('p:has(a)'));
+    ok(view.$el.is('p'));
+    ok(view.$el.has('a'));
   });
 
   test("events passed in options", 2, function() {
@@ -327,4 +328,4 @@ $(document).ready(function() {
     equal(counter, 4);
   });
 
-});
+})();
