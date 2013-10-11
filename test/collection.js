@@ -287,6 +287,39 @@
     equal(otherRemoved, null);
   });
 
+  test("add and remove return values", 13, function() {
+    var Even = Backbone.Model.extend({
+      validate: function(attrs) {
+        if (attrs.id % 2 !== 0) return "odd";
+      }
+    });
+    var col = new Backbone.Collection;
+    col.model = Even;
+
+    var list = col.add([{id: 2}, {id: 4}], {validate: true});
+    equal(list.length, 2);
+    ok(list[0] instanceof Backbone.Model);
+    equal(list[1], col.last());
+    equal(list[1].get('id'), 4);
+
+    list = col.add([{id: 3}, {id: 6}], {validate: true});
+    equal(col.length, 3);
+    equal(list[0], false);
+    equal(list[1].get('id'), 6);
+
+    var result = col.add({id: 6});
+    equal(result.cid, list[1].cid);
+
+    result = col.remove({id: 6});
+    equal(col.length, 2);
+    equal(result.id, 6);
+
+    list = col.remove([{id: 2}, {id: 8}]);
+    equal(col.length, 1);
+    equal(list[0].get('id'), 2);
+    equal(list[1], null);
+  });
+
   test("shift and pop", 2, function() {
     var col = new Backbone.Collection([{a: 'a'}, {b: 'b'}, {c: 'c'}]);
     equal(col.shift().get('a'), 'a');
@@ -912,6 +945,20 @@
     strictEqual(c.length, 0);
   });
 
+  test("set with many models does not overflow the stack", function() {
+    var n = 150000;
+    var collection = new Backbone.Collection();
+    var models = [];
+    for (var i = 0; i < n; i++) {
+      models.push({id: i});
+    }
+    collection.set(models);
+    equal(collection.length, n);
+    collection.reset();
+    collection.set(models, {at: 0});
+    equal(collection.length, n);
+  });
+
   test("set with only cids", 3, function() {
     var m1 = new Backbone.Model;
     var m2 = new Backbone.Model;
@@ -1031,6 +1078,13 @@
       }
     });
     new Collection().push({id: 1});
+  });
+
+  test("#2428 - push duplicate models, return the correct one", 1, function() {
+    var col = new Backbone.Collection;
+    var model1 = col.push({id: 101});
+    var model2 = col.push({id: 101})
+    ok(model2.cid == model1.cid);
   });
 
   test("`set` with non-normal id", function() {
