@@ -1,4 +1,4 @@
-//     Scoliosis.js 1.0.0
+//     Scoliosis.js 0.1.0
 
 //     (c) 2013 Paul Miller (http://paulmillr.com)
 //     (c) 2010-2011 Jeremy Ashkenas, DocumentCloud Inc.
@@ -117,40 +117,28 @@
 // the `$` variable.
 Backbone.$ = root.jQuery || root.Zepto || root.ender || root.$;
 
-var underscore = {};
-var _ = underscore;
+// Underscore replacement.
+Backbone.utils = root._ || {};
+var _ = Backbone.utils;
 
-var arrayProto = [];
-var slice = arrayProto.slice;
-
-underscore.result = function result(object, property) {
+Backbone.utils.result = function result(object, property) {
   var value = object ? object[property] : undefined;
   return typeof value === 'function' ? object[property]() : value;
 };
 
-underscore.defaults = function defaults(obj, from1, from2) {
-  slice.call(arguments, 1).forEach(function(item) {
+Backbone.utils.defaults = function defaults(obj, from1, from2) {
+  [].slice.call(arguments, 1).forEach(function(item) {
     for (var key in item) if (obj[key] === undefined)
       obj[key] = item[key];
   });
   return obj;
 };
 
-underscore.extend = function extend(obj) {
-  slice.call(arguments, 1).forEach(function(item) {
+Backbone.utils.extend = function extend(obj) {
+  [].slice.call(arguments, 1).forEach(function(item) {
     for (var key in item) obj[key] = item[key];
   });
   return obj;
-};
-
-underscore.clone = function clone(object) {
-  return underscore.extend({}, object);
-};
-
-underscore.isEmpty = function isEmpty(object) {
-  for (var key in object) if (hasOwnProperty.call(object, key))
-    return false;
-  return true;
 };
 
 var htmlEscapes = {
@@ -161,30 +149,13 @@ var htmlEscapes = {
   "'": '&#39;'
 };
 
-underscore.escape = function escape(string) {
+Backbone.utils.escape = function escape(string) {
   return string == null ? '' : String(string).replace(/[&<>"']/g, function(match) {
     return htmlEscapes[match];
   });
 };
 
-underscore.once = function once(func) {
-  var ran,
-      result;
-
-  return function() {
-    if (ran) {
-      return result;
-    }
-    ran = true;
-    result = func.apply(this, arguments);
-
-    // clear the `func` variable so the function may be garbage collected
-    func = null;
-    return result;
-  };
-};
-
-underscore.sortedIndex = function sortedIndex(array, obj, iterator, context) {
+Backbone.utils.sortedIndex = function sortedIndex(array, obj, iterator, context) {
   iterator = iterator == null ? Function.prototype :
     (typeof iterator === 'function' ? iterator : function(obj){ return obj[iterator]; });
   var value = iterator.call(context, obj);
@@ -196,47 +167,34 @@ underscore.sortedIndex = function sortedIndex(array, obj, iterator, context) {
   return low;
 };
 
-underscore.first = function(array, n, guard) {
-  if (array == null) return void 0;
-  return (n == null) || guard ? array[0] : slice.call(array, 0, n);
-};
-
-underscore.last = function(array, n, guard) {
-  if (array == null) return void 0;
-  if ((n == null) || guard) {
-    return array[array.length - 1];
-  } else {
-    return slice.call(array, Math.max(array.length - n, 0));
-  }
-};
-
-underscore.pluck = function(obj, key) {
-  return obj.map(function(value){ return value[key]; });
-};
-
-underscore.sortBy = function(obj, value, context) {
+Backbone.utils.sortBy = function(obj, value, context) {
   var iterator = typeof value === 'function' ? value : function(obj){ return obj[value]; };
-  return _.pluck(obj.map(function(value, index, list) {
-    return {
-      value: value,
-      index: index,
-      criteria: iterator.call(context, value, index, list)
-    };
-  }).sort(function(left, right) {
-    var a = left.criteria;
-    var b = right.criteria;
-    if (a !== b) {
-      if (a > b || a === void 0) return 1;
-      if (a < b || b === void 0) return -1;
-    }
-    return left.index - right.index;
-  }), 'value');
+  return obj
+    .map(function(value, index, list) {
+      return {
+        value: value,
+        index: index,
+        criteria: iterator.call(context, value, index, list)
+      };
+    })
+    .sort(function(left, right) {
+      var a = left.criteria;
+      var b = right.criteria;
+      if (a !== b) {
+        if (a > b || a === void 0) return 1;
+        if (a < b || b === void 0) return -1;
+      }
+      return left.index - right.index;
+    })
+    .map(function(item) {
+      return item.value;
+    });
 };
 
 /** Used to generate unique IDs */
 var idCounter = 0;
 
-underscore.uniqueId = function uniqueId(prefix) {
+Backbone.utils.uniqueId = function uniqueId(prefix) {
   var id = ++idCounter + '';
   return prefix ? prefix + id : id;
 };
@@ -332,7 +290,7 @@ var eq = function(a, b, aStack, bStack) {
 };
 
 // Perform a deep comparison to check if two objects are equal.
-underscore.isEqual = function(a, b) {
+Backbone.utils.isEqual = function(a, b) {
   return eq(a, b, [], []);
 };
 // Backbone.Events
@@ -365,10 +323,14 @@ var Events = Backbone.Events = {
   once: function(name, callback, context) {
     if (!eventsApi(this, 'once', name, [callback, context]) || !callback) return this;
     var self = this;
-    var once = _.once(function() {
+    var ran;
+
+    var once = function() {
+      if (ran) return;
+      ran = true;
       self.off(name, once);
       callback.apply(this, arguments);
-    });
+    };
     once._callback = callback;
     return this.on(name, once, context);
   },
@@ -432,7 +394,7 @@ var Events = Backbone.Events = {
     for (var id in listeningTo) {
       obj = listeningTo[id];
       obj.off(name, callback, this);
-      if (remove || _.isEmpty(obj._events)) delete this._listeningTo[id];
+      if (remove || !Object.keys(obj._events).length) delete this._listeningTo[id];
     }
     return this;
   }
@@ -544,7 +506,7 @@ _.extend(Model.prototype, Events, {
 
   // Return a copy of the model's `attributes` object.
   toJSON: function(options) {
-    return _.clone(this.attributes);
+    return _.extend({}, this.attributes);
   },
 
   // Proxy `Backbone.sync` by default -- but override this if you need
@@ -597,7 +559,7 @@ _.extend(Model.prototype, Events, {
     this._changing  = true;
 
     if (!changing) {
-      this._previousAttributes = _.clone(this.attributes);
+      this._previousAttributes = _.extend({}, this.attributes);
       this.changed = {};
     }
     current = this.attributes, prev = this._previousAttributes;
@@ -655,7 +617,7 @@ _.extend(Model.prototype, Events, {
   // Determine if the model has changed since the last `"change"` event.
   // If you specify an attribute name, determine if that attribute has changed.
   hasChanged: function(attr) {
-    if (attr == null) return !_.isEmpty(this.changed);
+    if (attr == null) return !!Object.keys(this.changed).length;
     return hasOwnProperty.call(this.changed, attr);
   },
 
@@ -666,7 +628,7 @@ _.extend(Model.prototype, Events, {
   // You can also pass an attributes object to diff against the model,
   // determining if there *would be* a change.
   changedAttributes: function(diff) {
-    if (!diff) return this.hasChanged() ? _.clone(this.changed) : false;
+    if (!diff) return this.hasChanged() ? _.extend({}, this.changed) : false;
     var val, changed = false;
     var old = this._changing ? this._previousAttributes : this.attributes;
     for (var attr in diff) {
@@ -686,14 +648,14 @@ _.extend(Model.prototype, Events, {
   // Get all of the attributes of the model at the time of the previous
   // `"change"` event.
   previousAttributes: function() {
-    return _.clone(this._previousAttributes);
+    return _.extend({}, this._previousAttributes);
   },
 
   // Fetch the model from the server. If the server's representation of the
   // model differs from its current attributes, they will be overridden,
   // triggering a `"change"` event.
   fetch: function(options) {
-    options = options ? _.clone(options) : {};
+    options = options ? _.extend({}, options) : {};
     if (options.parse === void 0) options.parse = true;
     var model = this;
     var success = options.success;
@@ -768,7 +730,7 @@ _.extend(Model.prototype, Events, {
   // Optimistically removes the model from its collection, if it has one.
   // If `wait: true` is passed, waits for the server to respond before removal.
   destroy: function(options) {
-    options = options ? _.clone(options) : {};
+    options = options ? _.extend({}, options) : {};
     var model = this;
     var success = options.success;
 
@@ -1079,7 +1041,7 @@ _.extend(Collection.prototype, Events, {
   // Return models with matching attributes. Useful for simple cases of
   // `filter`.
   where: function(attrs, first) {
-    if (_.isEmpty(attrs)) return first ? void 0 : [];
+    if (!attrs || !Object.keys(attrs).length) return first ? void 0 : [];
     return this[first ? 'find' : 'filter'](function(model) {
       for (var key in attrs) {
         if (attrs[key] !== model.get(key)) return false;
@@ -1123,7 +1085,7 @@ _.extend(Collection.prototype, Events, {
   // collection when they arrive. If `reset: true` is passed, the response
   // data will be passed through the `reset` method instead of `set`.
   fetch: function(options) {
-    options = options ? _.clone(options) : {};
+    options = options ? _.extend({}, options) : {};
     if (options.parse === void 0) options.parse = true;
     var success = options.success;
     var collection = this;
@@ -1141,7 +1103,7 @@ _.extend(Collection.prototype, Events, {
   // collection immediately, unless `wait: true` is passed, in which case we
   // wait for the server to agree.
   create: function(model, options) {
-    options = options ? _.clone(options) : {};
+    options = options ? _.extend({}, options) : {};
     if (!(model = this._prepareModel(model, options))) return false;
     if (!options.wait) this.add(model, options);
     var collection = this;
@@ -1180,7 +1142,7 @@ _.extend(Collection.prototype, Events, {
       if (!attrs.collection) attrs.collection = this;
       return attrs;
     }
-    options = options ? _.clone(options) : {};
+    options = options ? _.extend({}, options) : {};
     options.collection = this;
     var model = new this.model(attrs, options);
     if (!model.validationError) return model;
@@ -1243,30 +1205,31 @@ if (_.each) {
     };
   });
 } else {
-  [
-    'forEach', 'map', 'filter', 'some', 'every', 'reduce', 'reduceRight',
-    'indexOf', 'lastIndexOf'
-  ].forEach(function(method) {
+  ['forEach', 'map', 'filter', 'some', 'every', 'reduce', 'reduceRight',
+    'indexOf', 'lastIndexOf'].forEach(function(method) {
+    var fn = Array.prototype[method];
     Collection.prototype[method] = function(arg, context) {
-      return Array.prototype[method].call(this.models, arg, context);
+      return fn.call(this.models, arg, context);
     };
   });
 
-  [
-    'first', 'last'
-  ].forEach(function(method) {
-    Collection.prototype[method] = function() {
-      var args = slice.call(arguments);
-      args.unshift(this.models);
-      return _[method].apply(_, args);
+  // Too many tests depend on these, leave for now.
+  Collection.prototype.first = function(n, guard) {
+    var array = this.models;
+    return (n == null) || guard ? array[0] : slice.call(array, 0, n);
+  };
+
+  Collection.prototype.last = function(n, guard) {
+    var array = this.models;
+    if ((n == null) || guard) {
+      return array[array.length - 1];
+    } else {
+      return slice.call(array, Math.max(array.length - n, 0));
     }
-  });
+  };
 
   // Underscore methods that take a property name as an argument.
-  var attributeMethods = ['sortBy'];
-
-  // Use attributes instead of properties.
-  attributeMethods.forEach(function(method) {
+  ['sortBy'].forEach(function(method) {
     Collection.prototype[method] = function(value, context) {
       var iterator = typeof value === 'function' ? value : function(model) {
         return model.get(value);

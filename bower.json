@@ -15,10 +15,9 @@
     "view",
     "controller"
   ],
-  "dependencies": {
-    "jquery": "~2.0.0"
-  },
+  "dependencies": {},
   "devDependencies": {
+    "jquery": "~2.0.0",
     "underscore": "~1.5.2",
     "qunit": "~1"
   },
