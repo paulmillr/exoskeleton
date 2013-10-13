@@ -1,11 +1,9 @@
 {
   "name": "scoliosis",
   "main": "scoliosis.js",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "homepage": "https://github.com/paulmillr/scoliosis",
-  "authors": [
-    "Paul Millr <paul+gh@paulmillr.com>"
-  ],
+  "author": "Paul Miller (http://paulmillr.com)",
   "description": "Experiment in making better Backbone.js drop-in replacement.",
   "keywords": [
     "Backbone",
@@ -18,7 +16,7 @@
     "controller"
   ],
   "dependencies": {
-    "jquery": "~2"
+    "jquery": "~2.0.0"
   },
   "devDependencies": {
     "underscore": "~1.5.2",
