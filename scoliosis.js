@@ -11,7 +11,7 @@
   if (typeof define === 'function' && define.amd) {
     define(['underscore', 'jquery'], factory);
   } else if (typeof exports === 'object') {
-    factory(require('underscore'), require('jquery'));
+    factory.call(this, require('underscore'), require('jquery'));
   } else {
     factory.call(this, this._, this.jQuery || this.Zepto || this.ender || this.$);
   }
