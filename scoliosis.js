@@ -7,7 +7,15 @@
 //     For all details and documentation:
 //     https://github.com/paulmillr/scoliosis
 
-(function(undefined) {
+(function (factory) {
+  if (typeof define === 'function' && define.amd) {
+    define(['underscore', 'jquery'], factory);
+  } else if (typeof exports === 'object') {
+    factory(require('underscore'), require('jquery'));
+  } else {
+    factory.call(this, this._, this.jQuery || this.Zepto || this.ender || this.$);
+  }
+}(function(_, $) {
   'use strict';
 
   // Initial Setup
@@ -15,24 +23,29 @@
 
   // Save a reference to the global object (`window` in the browser, `exports`
   // on the server).
-  var root = (typeof global === 'undefined') ? window : global;
+  var root = this;
 
   // Save the previous value of the `Backbone` variable, so that it can be
   // restored later on, if `noConflict` is used.
   var previousBackbone = root.Backbone;
+
+  // The top-level namespace. All public Backbone classes and modules will
+  // be attached to this. Exported for both the browser and the server.
+  var Backbone;
+  if (typeof exports !== 'undefined') {
+    Backbone = exports;
+  } else {
+    Backbone = root.Backbone = {};
+  }
+
+  // Underscore replacement.
+  _ = Backbone.utils = _ || {};
 
   // Create local references to array methods we'll want to use later.
   var array = [];
   var push = array.push;
   var slice = array.slice;
   var splice = array.splice;
-
-  // The top-level namespace. All public Backbone classes and modules will
-  // be attached to this. Exported for both the browser and the server.
-  var Backbone;
-  if (typeof exports === 'undefined') {
-    Backbone = root.Backbone = {};
-  }
 
   // Current version of the library. Keep in sync with `package.json`.
   Backbone.VERSION = '1.0.0';
@@ -107,20 +120,6 @@
       model.trigger('error', model, resp, options);
     };
   };
-
-  // Here goes the stuff.
-// Require Underscore, if we're on the server, and it's not already present.
-// var _ = root._;
-// if (!_ && (typeof require !== 'undefined')) _ = require('underscore');
-
-// For Backbone's purposes, jQuery, Zepto, Ender, or My Library (kidding) owns
-// the `$` variable.
-Backbone.$ = root.jQuery || root.Zepto || root.ender || root.$;
-
-// Underscore replacement.
-Backbone.utils = root._ || {};
-var _ = Backbone.utils;
-
 Backbone.utils.result = function result(object, property) {
   var value = object ? object[property] : undefined;
   return typeof value === 'function' ? object[property]() : value;
@@ -1213,21 +1212,6 @@ if (_.each) {
     };
   });
 
-  // Too many tests depend on these, leave for now.
-  Collection.prototype.first = function(n, guard) {
-    var array = this.models;
-    return (n == null) || guard ? array[0] : slice.call(array, 0, n);
-  };
-
-  Collection.prototype.last = function(n, guard) {
-    var array = this.models;
-    if ((n == null) || guard) {
-      return array[array.length - 1];
-    } else {
-      return slice.call(array, Math.max(array.length - n, 0));
-    }
-  };
-
   // Underscore methods that take a property name as an argument.
   ['sortBy'].forEach(function(method) {
     Collection.prototype[method] = function(value, context) {
@@ -1297,7 +1281,7 @@ _.extend(View.prototype, Events, {
   // Remove this view by taking the element out of the DOM, and removing any
   // applicable Backbone.Events listeners.
   remove: function() {
-    this.$el.remove();
+    if (this.$el) this.$el.remove();
     this.stopListening();
     return this;
   },
@@ -1807,16 +1791,4 @@ _.extend(History.prototype, Events, {
 
   // Create the default Backbone.history.
   Backbone.history = new History;
-
-  var main = function() {
-    return Backbone;
-  };
-
-  if (typeof define === 'function' && typeof define.amd == 'object' && define.amd) {
-    define(main); // RequireJS
-  } else if (typeof module === 'object' && module.exports) {
-    module.exports = main();
-  } else {
-    window.Backbone = main(); // CommonJS and <script>
-  }
-})();
+}));
