@@ -8,9 +8,9 @@ Well, [Chaplin](http://chaplinjs.org) passes all its tests with Scoliosis instea
 
 ## Plans
 
-- [ ] Custom build (you can `cat` stuff now)
+- [x] Custom build (you can `cat` stuff now)
+- [x] No hard dependencies on underscore or jquery
 - [ ] Query-string router
-- [x] No hard dependencies on underscore or jquery (done: underscore)
 - [ ] Support for Bower and Component(1)
 - [ ] AMD support
 - [ ] Speed
@@ -18,7 +18,6 @@ Well, [Chaplin](http://chaplinjs.org) passes all its tests with Scoliosis instea
 - [ ] View#delegateEvents(keepOld)
 - [ ] extend adds __super__
 - [ ] Object.create(null) https://github.com/jashkenas/backbone/issues/1495
-- [ ] Builds for modern browsers (IE9+)
 
 ## Differences
 
