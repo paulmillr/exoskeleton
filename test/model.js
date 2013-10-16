@@ -1108,4 +1108,21 @@
     model.set({a: true});
   });
 
+  /////////////////////
+  // Scoliosis-specific
+  /////////////////////
+  test("Attrs with Object.create(null)", 11, function() {
+    var props = ['constructor', 'hasOwnProperty', 'isPrototypeOf', 'toString', 'valueOf'];
+    var model = new Backbone.Model();
+    _.each(props, function(prop) {
+      ok(!model.attributes[prop]);
+    });
+    model.set({a: true});
+    var changed = model.changedAttributes();
+    equal(changed.a, true);
+    _.each(props, function(prop) {
+      ok(!changed[prop]);
+    });
+  });
+
 })();
