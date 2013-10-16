@@ -16,7 +16,6 @@ Well, [Chaplin](http://chaplinjs.org) passes all its tests with Scoliosis instea
 - [ ] Speed
 - [ ] View#noWrap (maybe)
 - [ ] View#delegateEvents(keepOld)
-- [ ] extend adds __super__
 - [x] Object.create(null) https://github.com/jashkenas/backbone/issues/1495
 
 ## Differences
