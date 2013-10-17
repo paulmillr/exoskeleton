@@ -1,0 +1,26 @@
+{
+  "name": "scoliosis",
+  "repo": "paulmillr/scoliosis",
+  "description": "Experiment in making better Backbone.js drop-in replacement.",
+  "version": "0.1.0",
+  "keywords": [
+    "Backbone",
+    "Scoliosis",
+    "MVC",
+    "client",
+    "browser",
+    "model",
+    "view",
+    "controller"
+  ],
+  "dependencies": {},
+  "development": {
+    "jquery": "~2.0.0",
+    "underscore": "~1.5.2",
+    "qunit": "~1"
+  },
+  "scripts": [
+    "index.js"
+  ],
+  "license": "MIT"
+}
