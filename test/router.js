@@ -559,7 +559,9 @@
       history: {
         pushState: function(){},
         replaceState: function(state, title, url){
-          strictEqual(url, '/root/x/y?a=b');
+          // CHANGED BY SCOLIOSIS
+          // strictEqual(url, '/root/x/y?a=b');
+          strictEqual(url, '/root/x/y');
         }
       }
     });
@@ -717,7 +719,9 @@
 
     var Router = Backbone.Router.extend({
       routes: {
-        path: function() { ok(true); }
+        // fixed by Scoliosis
+        // path: function() { ok(true); }
+        'path?query': function() { ok(true); }
       }
     });
     var router = new Router;
@@ -725,6 +729,28 @@
     location.replace('http://example.com/');
     Backbone.history.start({pushState: true});
     Backbone.history.navigate('path?query#hash', true);
+  });
+
+  // SCOLIOSIS-SPECIFIC
+  test('History allows querystring params with pushState', 1, function() {
+    Backbone.history.stop();
+    location.replace('http://example.com/path');
+
+    Backbone.history = _.extend(new Backbone.History, {
+      location: location,
+      history: {
+        pushState: function(state, title, url) {
+          strictEqual(url, '/path?foo=bar');
+        }
+      }
+    });
+    Backbone.history.start({pushState: true});
+    Backbone.history.navigate('path?foo=bar');
+  });
+
+  test('History allows querystring params in hash', 1, function() {
+    Backbone.history.navigate('path?foo=bar');
+    equal(Backbone.history.location.hash, '#path?foo=bar');
   });
 
 })();
