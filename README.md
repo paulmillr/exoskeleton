@@ -11,8 +11,8 @@ Well, [Chaplin](http://chaplinjs.org) passes all its tests with Scoliosis instea
 - [x] Custom build (you can `cat` stuff now)
 - [x] No hard dependencies on underscore or jquery
 - [ ] Query-string router
-- [ ] Support for Bower and Component(1)
-- [ ] AMD support
+- [x] Support for Bower and Component(1)
+- [x] AMD support
 - [ ] Speed
 - [ ] View#noWrap (maybe)
 - [ ] View#delegateEvents(keepOld)
