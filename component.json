@@ -20,7 +20,7 @@
     "qunit": "~1"
   },
   "scripts": [
-    "index.js"
+    "scoliosis.js"
   ],
   "license": "MIT"
 }
