@@ -352,13 +352,20 @@
 
   test("change, hasChanged, changedAttributes, previous, previousAttributes", 9, function() {
     var model = new Backbone.Model({name: "Tim", age: 10});
+    var empty = function(object) {
+      var res = Object.create(null);
+      Object.keys(object).forEach(function(name) {
+        res[name] = object[name];
+      });
+      return res;
+    };
     deepEqual(model.changedAttributes(), false);
     model.on('change', function() {
       ok(model.hasChanged('name'), 'name changed');
       ok(!model.hasChanged('age'), 'age did not');
-      ok(_.isEqual(model.changedAttributes(), {name : 'Rob'}), 'changedAttributes returns the changed attrs');
+      ok(_.isEqual(model.changedAttributes(), empty({name : 'Rob'})), 'changedAttributes returns the changed attrs');
       equal(model.previous('name'), 'Tim');
-      ok(_.isEqual(model.previousAttributes(), {name : "Tim", age : 10}), 'previousAttributes is correct');
+      ok(_.isEqual(model.previousAttributes(), empty({name : "Tim", age : 10})), 'previousAttributes is correct');
     });
     equal(model.hasChanged(), false);
     equal(model.hasChanged(undefined), false);
