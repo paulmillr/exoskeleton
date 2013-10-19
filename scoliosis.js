@@ -1,4 +1,4 @@
-//     Scoliosis.js 0.2.0
+//     Scoliosis.js 0.2.1
 
 //     (c) 2013 Paul Miller (http://paulmillr.com)
 //     (c) 2010-2011 Jeremy Ashkenas, DocumentCloud Inc.
@@ -7,15 +7,15 @@
 //     For all details and documentation:
 //     https://github.com/paulmillr/scoliosis
 
-(function (factory) {
+(function(factory) {
   if (typeof define === 'function' && define.amd) {
     define(['underscore', 'jquery'], factory);
   } else if (typeof exports === 'object') {
     factory(require('underscore'), require('jquery'));
   } else {
-    factory.call(this, this._, this.jQuery || this.Zepto || this.ender || this.$);
+    factory(this._, this.jQuery || this.Zepto || this.ender || this.$);
   }
-}(function(_, $) {
+})(function(_, $) {
   'use strict';
 
   // Initial Setup
@@ -23,7 +23,7 @@
 
   // Save a reference to the global object (`window` in the browser, `exports`
   // on the server).
-  var root = this;
+  var root = (typeof window === 'undefined') ? exports : window;
 
   // Save the previous value of the `Backbone` variable, so that it can be
   // restored later on, if `noConflict` is used.
@@ -1838,4 +1838,5 @@ _.extend(History.prototype, Events, {
 
   // Create the default Backbone.history.
   Backbone.history = new History;
-}));
+  return Backbone;
+});
