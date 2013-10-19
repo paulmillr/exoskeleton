@@ -11,7 +11,7 @@
   if (typeof define === 'function' && define.amd) {
     define(['underscore', 'jquery'], factory);
   } else if (typeof exports === 'object') {
-    factory.call(this, require('underscore'), require('jquery'));
+    factory(require('underscore'), require('jquery'));
   } else {
     factory.call(this, this._, this.jQuery || this.Zepto || this.ender || this.$);
   }
@@ -40,6 +40,9 @@
 
   // Underscore replacement.
   _ = Backbone.utils = _ || {};
+
+  // Hold onto a local reference to `$`. Can be changed at any point.
+  Backbone.$ = $;
 
   // Create local references to array methods we'll want to use later.
   var array = [];
@@ -477,12 +480,12 @@ var Model = Backbone.Model = function(attributes, options) {
   var attrs = attributes || {};
   options || (options = {});
   this.cid = _.uniqueId('c');
-  this.attributes = {};
+  this.attributes = Object.create(null);
   if (options.collection) this.collection = options.collection;
   if (options.parse) attrs = this.parse(attrs, options) || {};
   attrs = _.defaults({}, attrs, _.result(this, 'defaults'));
   this.set(attrs, options);
-  this.changed = {};
+  this.changed = Object.create(null);
   this.initialize.apply(this, arguments);
 };
 
@@ -505,7 +508,7 @@ _.extend(Model.prototype, Events, {
 
   // Return a copy of the model's `attributes` object.
   toJSON: function(options) {
-    return _.extend({}, this.attributes);
+    return _.extend(Object.create(null), this.attributes);
   },
 
   // Proxy `Backbone.sync` by default -- but override this if you need
@@ -558,7 +561,7 @@ _.extend(Model.prototype, Events, {
     this._changing  = true;
 
     if (!changing) {
-      this._previousAttributes = _.extend({}, this.attributes);
+      this._previousAttributes = _.extend(Object.create(null), this.attributes);
       this.changed = {};
     }
     current = this.attributes, prev = this._previousAttributes;
@@ -627,7 +630,7 @@ _.extend(Model.prototype, Events, {
   // You can also pass an attributes object to diff against the model,
   // determining if there *would be* a change.
   changedAttributes: function(diff) {
-    if (!diff) return this.hasChanged() ? _.extend({}, this.changed) : false;
+    if (!diff) return this.hasChanged() ? _.extend(Object.create(null), this.changed) : false;
     var val, changed = false;
     var old = this._changing ? this._previousAttributes : this.attributes;
     for (var attr in diff) {
@@ -647,7 +650,7 @@ _.extend(Model.prototype, Events, {
   // Get all of the attributes of the model at the time of the previous
   // `"change"` event.
   previousAttributes: function() {
-    return _.extend({}, this._previousAttributes);
+    return _.extend(Object.create(null), this._previousAttributes);
   },
 
   // Fetch the model from the server. If the server's representation of the
@@ -694,7 +697,7 @@ _.extend(Model.prototype, Events, {
 
     // Set temporary attributes if `{wait: true}`.
     if (attrs && options.wait) {
-      this.attributes = _.extend({}, attributes, attrs);
+      this.attributes = _.extend(Object.create(null), attributes, attrs);
     }
 
     // After a successful server-side save, the client is (optionally)
@@ -788,7 +791,7 @@ _.extend(Model.prototype, Events, {
   // returning `true` if all is well. Otherwise, fire an `"invalid"` event.
   _validate: function(attrs, options) {
     if (!options.validate || !this.validate) return true;
-    attrs = _.extend({}, this.attributes, attrs);
+    attrs = _.extend(Object.create(null), this.attributes, attrs);
     var error = this.validationError = this.validate(attrs, options) || null;
     if (!error) return true;
     this.trigger('invalid', this, error, _.extend(options, {validationError: error}));
@@ -1237,23 +1240,43 @@ if (_.each) {
 // attached directly to the view.  See `viewOptions` for an exhaustive
 // list.
 
-// Creating a Backbone.View creates its initial element outside of the DOM,
-// if an existing element is not provided...
-var View = Backbone.View = function(options) {
-  this.cid = _.uniqueId('view');
-  if (options) Object.keys(options).forEach(function(key) {
-    this[key] = options[key];
-  }, this);
-  this._ensureElement();
-  this.initialize.apply(this, arguments);
-  this.delegateEvents();
-};
-
 // Cached regex to split keys for `delegate`.
 var delegateEventSplitter = /^(\S+)\s*(.*)$/;
 
 // List of view options to be merged as properties.
 var viewOptions = ['model', 'collection', 'el', 'id', 'attributes', 'className', 'tagName', 'events'];
+
+
+var matchesSelector = (function() {
+  // Suffix.
+  var sfx = 'MatchesSelector';
+  var tag = document.createElement('div');
+  var name;
+  ['matches', 'webkit' + sfx, 'moz' + sfx, 'ms' + sfx].some(function(item) {
+    var valid = (item in tag);
+    name = item;
+    return valid;
+  });
+  if (!name) {
+    throw new Error('Element#matches is not supported');
+  }
+  return function(element, selector) {
+    return element[name](selector)
+  };
+})();
+
+// Creating a Backbone.View creates its initial element outside of the DOM,
+// if an existing element is not provided...
+var View = Backbone.View = function(options) {
+  this.cid = _.uniqueId('view');
+  if (options) Object.keys(options).forEach(function(key) {
+    if (viewOptions.indexOf(key) !== -1) this[key] = options[key];
+  }, this);
+  this._handlers = [];
+  this._ensureElement();
+  this.initialize.apply(this, arguments);
+  this.delegateEvents();
+};
 
 // Set up all inheritable **Backbone.View** properties and methods.
 _.extend(View.prototype, Events, {
@@ -1264,7 +1287,16 @@ _.extend(View.prototype, Events, {
   // jQuery delegate for element lookup, scoped to DOM elements within the
   // current view. This should be preferred to global lookups where possible.
   $: function(selector) {
-    return this.$el.find(selector);
+    return Backbone.$ ? this.$el.find(selector) : this.findAll(selector);
+  },
+
+  // Scoliosis-related DOM methods.
+  find: function(selector) {
+    return this.el.querySelector(selector);
+  },
+
+  findAll: function(selector) {
+    return slice.call(this.el.querySelectorAll(selector));
   },
 
   // Initialize is an empty function by default. Override it with your own
@@ -1281,7 +1313,7 @@ _.extend(View.prototype, Events, {
   // Remove this view by taking the element out of the DOM, and removing any
   // applicable Backbone.Events listeners.
   remove: function() {
-    if (this.$el) this.$el.remove();
+    Backbone.$ ? this.$el.remove() : this.el.parentNode.removeChild(this.el);
     this.stopListening();
     return this;
   },
@@ -1294,10 +1326,67 @@ _.extend(View.prototype, Events, {
       this.$el = element instanceof Backbone.$ ? element : Backbone.$(element);
       this.el = this.$el[0];
     } else {
-      this.el = element;
+      if (this.el) this.undelegateEvents();
+      var el = (typeof element === 'string') ?
+        document.querySelector(element) : element;
+      this.el = el;
     }
     if (delegate !== false) this.delegateEvents();
     return this;
+  },
+
+  delegate: function(eventName, selector, callback) {
+    if (typeof selector === 'function') {
+      callback = selector;
+      selector = null;
+    }
+
+    var root = this.el;
+    var bound = callback.bind(this);
+    var handler = selector ? function(event) {
+      for (var el = event.target; el && el !== root; el = el.parentNode) {
+        if (matchesSelector(el, selector)) {
+          event.originalTarget = el;
+          return bound(event);
+        }
+      }
+    } : bound;
+
+    root.addEventListener(eventName, handler, false);
+    this._handlers.push({
+      eventName: eventName, selector: selector,
+      callback: callback, handler: handler
+    });
+  },
+
+  undelegate: function(eventName, selector, callback) {
+    if (typeof selector === 'function') {
+      callback = selector;
+      selector = null;
+    }
+
+    var root = this.el;
+    var handlers = this._handlers;
+    var removeListener = function(item) {
+      root.removeEventListener(item.eventName, item.handler, false);
+    };
+
+    // Remove all handlers.
+    if (!eventName && !selector && !callback) {
+      handlers.forEach(removeListener);
+      this._handlers = [];
+    } else {
+      // Remove some handlers.
+      handlers
+        .filter(function(item) {
+          return item.eventName === eventName && item.callback === callback &&
+            (selector ? item.selector === selector : true);
+        })
+        .forEach(function(item) {
+          removeListener(item);
+          handlers.splice(handlers.indexOf(item), 1);
+        });
+    }
   },
 
   // Set callbacks, where `this.events` is a hash of
@@ -1315,9 +1404,9 @@ _.extend(View.prototype, Events, {
   // Omitting the selector binds the event to `this.el`.
   // This only works for delegate-able events: not `focus`, `blur`, and
   // not `change`, `submit`, and `reset` in Internet Explorer.
-  delegateEvents: function(events) {
+  delegateEvents: function(events, keepOld) {
     if (!(events || (events = _.result(this, 'events')))) return this;
-    this.undelegateEvents();
+    if (!keepOld) this.undelegateEvents();
     for (var key in events) {
       var method = events[key];
       if (typeof method !== 'function') method = this[events[key]];
@@ -1325,12 +1414,13 @@ _.extend(View.prototype, Events, {
 
       var match = key.match(delegateEventSplitter);
       var eventName = match[1], selector = match[2];
-      method = method.bind(this);
-      eventName += '.delegateEvents' + this.cid;
-      if (selector === '') {
-        this.$el.on(eventName, method);
+
+      if (Backbone.$) {
+        eventName += '.delegateEvents' + this.cid;
+        method = method.bind(this);
+        this.$el.on(eventName, (selector ? selector : null), method);
       } else {
-        this.$el.on(eventName, selector, method);
+        this.delegate(eventName, selector, method)
       }
     }
     return this;
@@ -1340,7 +1430,11 @@ _.extend(View.prototype, Events, {
   // You usually don't need to use this, but may wish to if you have multiple
   // Backbone views attached to the same DOM element.
   undelegateEvents: function() {
-    this.$el.off('.delegateEvents' + this.cid);
+    if (Backbone.$) {
+      this.$el.off('.delegateEvents' + this.cid);
+    } else {
+      this.undelegate();
+    }
     return this;
   },
 
@@ -1426,22 +1520,11 @@ Backbone.sync = function(method, model, options) {
     params.processData = false;
   }
 
-  // If we're sending a `PATCH` request, and we're in an old Internet Explorer
-  // that still has ActiveX enabled by default, override jQuery to use that
-  // for XHR instead. Remove this line when jQuery supports `PATCH` on IE8.
-  if (params.type === 'PATCH' && noXhrPatch) {
-    params.xhr = function() {
-      return new ActiveXObject("Microsoft.XMLHTTP");
-    };
-  }
-
   // Make the request, allowing the user to override any Ajax options.
   var xhr = options.xhr = Backbone.ajax(_.extend(params, options));
   model.trigger('request', model, xhr, options);
   return xhr;
 };
-
-var noXhrPatch = typeof window !== 'undefined' && !!window.ActiveXObject && !(window.XMLHttpRequest && (new XMLHttpRequest).dispatchEvent);
 
 // Map from CRUD to HTTP for our default `Backbone.sync` implementation.
 var methodMap = {
@@ -1558,8 +1641,7 @@ _.extend(Router.prototype, Events, {
 // Handles cross-browser history management, based on either
 // [pushState](http://diveintohtml5.info/history.html) and real URLs, or
 // [onhashchange](https://developer.mozilla.org/en-US/docs/DOM/window.onhashchange)
-// and URL fragments. If the browser supports neither (old IE, natch),
-// falls back to polling.
+// and URL fragments.
 var History = Backbone.History = function() {
   this.handlers = [];
   this.checkUrl = this.checkUrl.bind(this);
@@ -1577,24 +1659,17 @@ var routeStripper = /^[#\/]|\s+$/g;
 // Cached regex for stripping leading and trailing slashes.
 var rootStripper = /^\/+|\/+$/g;
 
-// Cached regex for detecting MSIE.
-var isExplorer = /msie [\w.]+/;
-
 // Cached regex for removing a trailing slash.
 var trailingSlash = /\/$/;
 
 // Cached regex for stripping urls of hash and query.
-var pathStripper = /[?#].*$/;
+var pathStripper = /[#].*$/;
 
 // Has the history handling already been started?
 History.started = false;
 
 // Set up all inheritable **Backbone.History** properties and methods.
 _.extend(History.prototype, Events, {
-
-  // The default interval to poll for hash changes, if necessary, is
-  // twenty times a second.
-  interval: 50,
 
   // Gets the true hash value. Cannot use location.hash directly due to bug
   // in Firefox where location.hash will always be decoded.
@@ -1605,10 +1680,11 @@ _.extend(History.prototype, Events, {
 
   // Get the cross-browser normalized URL fragment, either from the URL,
   // the hash, or the override.
-  getFragment: function(fragment, forcePushState) {
+  getFragment: function(fragment) {
     if (fragment == null) {
-      if (this._hasPushState || !this._wantsHashChange || forcePushState) {
-        fragment = this.location.pathname;
+      if (this._wantsPushState || !this._wantsHashChange) {
+        // CHANGED: Make fragment include query string.
+        fragment = this.location.pathname + this.location.search;
         var root = this.root.replace(trailingSlash, '');
         if (!fragment.indexOf(root)) fragment = fragment.slice(root.length);
       } else {
@@ -1624,33 +1700,23 @@ _.extend(History.prototype, Events, {
     if (History.started) throw new Error("Backbone.history has already been started");
     History.started = true;
 
-    // Figure out the initial configuration. Do we need an iframe?
-    // Is pushState desired ... is it available?
+    // Figure out the initial configuration.
+    // Is pushState desired or should we use hashchange only?
     this.options          = _.extend({root: '/'}, this.options, options);
     this.root             = this.options.root;
     this._wantsHashChange = this.options.hashChange !== false;
     this._wantsPushState  = !!this.options.pushState;
-    this._hasPushState    = !!(this.options.pushState && this.history && this.history.pushState);
     var fragment          = this.getFragment();
-    var docMode           = document.documentMode;
-    var oldIE             = (isExplorer.exec(navigator.userAgent.toLowerCase()) && (!docMode || docMode <= 7));
 
     // Normalize root to always include a leading and trailing slash.
     this.root = ('/' + this.root + '/').replace(rootStripper, '/');
 
-    if (oldIE && this._wantsHashChange) {
-      this.iframe = Backbone.$('<iframe src="javascript:0" tabindex="-1" />').hide().appendTo('body')[0].contentWindow;
-      this.navigate(fragment);
-    }
-
-    // Depending on whether we're using pushState or hashes, and whether
-    // 'onhashchange' is supported, determine how we check the URL state.
-    if (this._hasPushState) {
-      Backbone.$(window).on('popstate', this.checkUrl);
-    } else if (this._wantsHashChange && ('onhashchange' in window) && !oldIE) {
-      Backbone.$(window).on('hashchange', this.checkUrl);
+    // Depending on whether we're using pushState or hashes, determine how we
+    // check the URL state.
+    if (this._wantsPushState) {
+      window.addEventListener('popstate', this.checkUrl, false);
     } else if (this._wantsHashChange) {
-      this._checkUrlInterval = setInterval(this.checkUrl, this.interval);
+      window.addEventListener('hashchange', this.checkUrl, false);
     }
 
     // Determine if we need to change the base url, for a pushState link
@@ -1662,20 +1728,13 @@ _.extend(History.prototype, Events, {
     // Transition from hashChange to pushState or vice versa if both are
     // requested.
     if (this._wantsHashChange && this._wantsPushState) {
-
-      // If we've started off with a route from a `pushState`-enabled
-      // browser, but we're currently in a browser that doesn't support it...
-      if (!this._hasPushState && !atRoot) {
-        this.fragment = this.getFragment(null, true);
-        this.location.replace(this.root + this.location.search + '#' + this.fragment);
-        // Return immediately as browser will do redirect to new url
-        return true;
-
-      // Or if we've started out with a hash-based route, but we're currently
+      // If we've started out with a hash-based route, but we're currently
       // in a browser where it could be `pushState`-based instead...
-      } else if (this._hasPushState && atRoot && loc.hash) {
+      if (atRoot && loc.hash) {
         this.fragment = this.getHash().replace(routeStripper, '');
-        this.history.replaceState({}, document.title, this.root + this.fragment + loc.search);
+        // CHANGED: It's no longer needed to add loc.search at the end,
+        // as query params have been already included into @fragment
+        this.history.replaceState({}, document.title, this.root + this.fragment);
       }
 
     }
@@ -1686,8 +1745,8 @@ _.extend(History.prototype, Events, {
   // Disable Backbone.history, perhaps temporarily. Not useful in a real app,
   // but possibly useful for unit testing Routers.
   stop: function() {
-    Backbone.$(window).off('popstate', this.checkUrl).off('hashchange', this.checkUrl);
-    clearInterval(this._checkUrlInterval);
+    window.removeEventListener('popstate', this.checkUrl);
+    window.removeEventListener('hashchange', this.checkUrl);
     History.started = false;
   },
 
@@ -1698,14 +1757,10 @@ _.extend(History.prototype, Events, {
   },
 
   // Checks the current URL to see if it has changed, and if it has,
-  // calls `loadUrl`, normalizing across the hidden iframe.
+  // calls `loadUrl`.
   checkUrl: function(e) {
     var current = this.getFragment();
-    if (current === this.fragment && this.iframe) {
-      current = this.getFragment(this.getHash(this.iframe));
-    }
     if (current === this.fragment) return false;
-    if (this.iframe) this.navigate(current);
     this.loadUrl();
   },
 
@@ -1744,22 +1799,14 @@ _.extend(History.prototype, Events, {
     // Don't include a trailing slash on the root.
     if (fragment === '' && url !== '/') url = url.slice(0, -1);
 
-    // If pushState is available, we use it to set the fragment as a real URL.
-    if (this._hasPushState) {
+    // If we're using pushState we use it to set the fragment as a real URL.
+    if (this._wantsPushState) {
       this.history[options.replace ? 'replaceState' : 'pushState']({}, document.title, url);
 
     // If hash changes haven't been explicitly disabled, update the hash
     // fragment to store history.
     } else if (this._wantsHashChange) {
       this._updateHash(this.location, fragment, options.replace);
-      if (this.iframe && (fragment !== this.getFragment(this.getHash(this.iframe)))) {
-        // Opening and closing the iframe tricks IE7 and earlier to push a
-        // history entry on hash-tag change.  When replace is true, we don't
-        // want this.
-        if(!options.replace) this.iframe.document.open().close();
-        this._updateHash(this.iframe.location, fragment, options.replace);
-      }
-
     // If you've told us that you explicitly don't want fallback hashchange-
     // based history, then `navigate` becomes a page refresh.
     } else {
