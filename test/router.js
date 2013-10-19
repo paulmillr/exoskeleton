@@ -17,7 +17,9 @@
   _.extend(Location.prototype, {
 
     replace: function(href) {
-      _.extend(this, _.pick($('<a></a>', {href: href})[0],
+      var a = document.createElement('a');
+      a.href = href;
+      _.extend(this, _.pick(a,
         'href',
         'hash',
         'host',

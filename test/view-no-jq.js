@@ -43,6 +43,7 @@
 
     var el = document.createElement('p');
     el.innerHTML = '<a id="test"></a>';
+    document.body.appendChild(el);
     var view = new Backbone.View({el: el});
     view.increment = function(){ counter1++; };
     view.el.addEventListener('click', function(){ counter2++; }, false);
@@ -50,23 +51,27 @@
     var events = {'click #test': 'increment'};
 
     view.delegateEvents(events);
-    view.$('#test')[0].click();
+    view.find('#test').click();
     equal(counter1, 1);
     equal(counter2, 1);
 
-    view.$('#test')[0].click();
+    view.find('#test').click();
     equal(counter1, 2);
     equal(counter2, 2);
 
     view.delegateEvents(events);
-    view.$('#test')[0].click();
+    view.find('#test').click();
     equal(counter1, 3);
     equal(counter2, 3);
+    el.parentNode.removeChild(el);
   });
 
   test("delegateEvents allows functions for callbacks", 3, function() {
-    var view = new Backbone.View({el: document.createElement('p')});
+    var el = document.createElement('p');
+
+    var view = new Backbone.View({el: el});
     view.counter = 0;
+    document.body.appendChild(el);
 
     var events = {
       click: function() {
@@ -75,49 +80,52 @@
     };
 
     view.delegateEvents(events);
-    view.$el.click();
+    view.el.click();
     equal(view.counter, 1);
 
-    view.$el.click();
+    view.el.click();
     equal(view.counter, 2);
 
     view.delegateEvents(events);
-    view.$el.click();
+    view.el.click();
     equal(view.counter, 3);
+    el.parentNode.removeChild(el);
   });
 
 
   test("delegateEvents ignore undefined methods", 0, function() {
     var view = new Backbone.View({el: document.createElement('p')});
     view.delegateEvents({'click': 'undefinedMethod'});
-    view.$el.click();
+    view.el.click();
   });
 
   test("undelegateEvents", 6, function() {
     var counter1 = 0, counter2 = 0;
     var el = document.createElement('p');
     el.innerHTML = '<a id="test"></a>';
+    document.body.appendChild(el);
 
     var view = new Backbone.View({el: el});
     view.increment = function(){ counter1++; };
-    view.$el.addEventListener('click', function(){ counter2++; }, false);
+    view.el.addEventListener('click', function(){ counter2++; }, false);
 
     var events = {'click #test': 'increment'};
 
     view.delegateEvents(events);
-    view.$('#test')[0].click();
+    view.find('#test').click();
     equal(counter1, 1);
     equal(counter2, 1);
 
     view.undelegateEvents();
-    view.$('#test')[0].click();
+    view.find('#test').click();
     equal(counter1, 1);
     equal(counter2, 2);
 
     view.delegateEvents(events);
-    view.$('#test')[0].click();
+    view.find('#test').click();
     equal(counter1, 2);
     equal(counter2, 3);
+    el.parentNode.removeChild(el);
   });
 
   test("_ensureElement with DOM node el", 1, function() {
@@ -129,22 +137,22 @@
   });
 
   // not supported in Scoliosis
-  // test("_ensureElement with string el", 3, function() {
-  //   var View = Backbone.View.extend({
-  //     el: "body"
-  //   });
-  //   strictEqual(new View().el, document.body);
+  test("_ensureElement with string el", 3, function() {
+    var View = Backbone.View.extend({
+      el: "body"
+    });
+    strictEqual(new View().el, document.body);
 
-  //   View = Backbone.View.extend({
-  //     el: "#testElement > h1"
-  //   });
-  //   strictEqual(new View().el, $("#testElement > h1").get(0));
+    View = Backbone.View.extend({
+      el: "#testElement > h1"
+    });
+    strictEqual(new View().el, document.querySelector("#testElement > h1"));
 
-  //   View = Backbone.View.extend({
-  //     el: "#nonexistent"
-  //   });
-  //   ok(!new View().el);
-  // });
+    View = Backbone.View.extend({
+      el: "#nonexistent"
+    });
+    ok(!new View().el);
+  });
 
   test("with className and id functions", 2, function() {
     var View = Backbone.View.extend({
@@ -208,28 +216,34 @@
     equal(5, count);
   });
 
-  // not yet implemented
-  // test("custom events, with namespaces", 2, function() {
-  //   var count = 0;
+  var fireEvent = function(target, name) {
+    var event = document.createEvent('Events');
+    event.initEvent(name, true, true);
+    target.dispatchEvent(event);
+  };
 
-  //   var View = Backbone.View.extend({
-  //     el: $('body'),
-  //     events: function() {
-  //       return {"fake$event.namespaced": "run"};
-  //     },
-  //     run: function() {
-  //       count++;
-  //     }
-  //   });
+  test("custom events", 2, function() {
+    var count = 0;
 
-  //   var view = new View;
-  //   $('body').trigger('fake$event').trigger('fake$event');
-  //   equal(count, 2);
+    var View = Backbone.View.extend({
+      el: 'body',
+      events: function() {
+        return {"fake$event": "run"};
+      },
+      run: function() {
+        count++;
+      }
+    });
 
-  //   $('body').off('.namespaced');
-  //   $('body').trigger('fake$event');
-  //   equal(count, 2);
-  // });
+    var view = new View;
+    fireEvent(view.el, 'fake$event');
+    fireEvent(view.el, 'fake$event');
+    equal(count, 2);
+
+    view.undelegateEvents();
+    fireEvent(view.el, 'fake$event');
+    equal(count, 2);
+  });
 
   // test("#1048 - setElement uses provided object.", 2, function() {
   //   var $el = $('body');
@@ -244,6 +258,8 @@
   test("#986 - Undelegate before changing element.", 1, function() {
     var button1 = document.createElement('button');
     var button2 = document.createElement('button');
+    button1.className = 'button1';
+    button2.className = 'button2';
 
     var View = Backbone.View.extend({
       events: {
@@ -318,6 +334,7 @@
     var counter = 0;
     var el = document.createElement("p");
     el.innerHTML = '<a id="test"></a>';
+    document.body.appendChild(el);
 
     var View = Backbone.View.extend({
       el: el,
@@ -333,11 +350,12 @@
 
     view.$('#test')[0].click();
     view2.$('#test')[0].click();
-    equal(counter, 2);
+    equal(counter, 4);
 
     view.$('#test')[0].click();
     view2.$('#test')[0].click();
-    equal(counter, 4);
+    equal(counter, 8);
+    el.parentNode.removeChild(el);
   });
 
 })();
