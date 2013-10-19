@@ -1346,7 +1346,7 @@ _.extend(View.prototype, Events, {
     var handler = selector ? function(event) {
       for (var el = event.target; el && el !== root; el = el.parentNode) {
         if (matchesSelector(el, selector)) {
-          event.originalTarget = el;
+          event.delegateTarget = el;
           return bound(event);
         }
       }
