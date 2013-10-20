@@ -6,17 +6,17 @@ Experiment in making better Backbone.js drop-in replacement.
 
 Well, [Chaplin](http://chaplinjs.org) passes all its tests with Scoliosis instead of Backbone. That’s it. All features you need for real-world app seems to be working.
 
-## Plans
+## Current features
 
-- [x] Custom build (you can `cat` stuff now)
-- [x] No hard dependencies on underscore or jquery
-- [ ] Query-string router
-- [x] Support for Bower and Component(1)
-- [x] AMD support
-- [ ] Speed
-- [ ] View#noWrap (maybe)
-- [ ] View#delegateEvents(keepOld)
-- [x] Object.create(null) https://github.com/jashkenas/backbone/issues/1495
+* Custom build (you can `cat` stuff now)
+* No hard dependencies on underscore or jquery
+* Query-string router
+* Support for Bower and Component(1)
+* AMD support
+* Speed
+* View#noWrap (maybe)
+* View#delegateEvents(keepOld)
+* Object.create(null) https://github.com/jashkenas/backbone/issues/1495
 
 ## Differences
 
