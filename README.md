@@ -3,7 +3,7 @@
 Faster and leaner Backbone.js drop-in replacement
 
 ## What already works
-All features you need for real-world app seem to be working.
+All features you need for real-world app are working.
 All software tests are passing: (libs = underscore and jquery)
 
 * Backbone: **with and without** libs
