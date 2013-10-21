@@ -1,3 +1,7 @@
+# Scoliosis 0.2.2 (21 October 2013)
+* All Chaplin tests are now passing.
+* Added `utils.matchesSelector`.
+
 # Scoliosis 0.2.1 (19 October 2013)
 * Fixed AMD support.
 

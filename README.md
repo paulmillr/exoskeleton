@@ -10,9 +10,7 @@ All software tests are passing:
 (libs = underscore and jquery)
 
 * Backbone: **with and without** libs
-* [Chaplin](http://chaplinjs.org)
-    * (100%) with libs
-    * (95%) without libs
+* [Chaplin](http://chaplinjs.org): **with and without** libs
 
 ## Current features
 

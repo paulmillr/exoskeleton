@@ -1,7 +1,7 @@
 {
   "name": "scoliosis",
   "main": "scoliosis.js",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "homepage": "https://github.com/paulmillr/scoliosis",
   "author": "Paul Miller (http://paulmillr.com)",
   "description": "Experiment in making better Backbone.js drop-in replacement.",

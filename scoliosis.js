@@ -1,4 +1,4 @@
-//     Scoliosis.js 0.2.1
+//     Scoliosis.js 0.2.2
 
 //     (c) 2013 Paul Miller (http://paulmillr.com)
 //     (c) 2010-2011 Jeremy Ashkenas, DocumentCloud Inc.
@@ -39,7 +39,7 @@
   }
 
   // Underscore replacement.
-  _ = Backbone.utils = _ || {};
+  var utils = _ = Backbone.utils = _ || {};
 
   // Hold onto a local reference to `$`. Can be changed at any point.
   Backbone.$ = $;
@@ -123,12 +123,12 @@
       model.trigger('error', model, resp, options);
     };
   };
-Backbone.utils.result = function result(object, property) {
+utils.result = function result(object, property) {
   var value = object ? object[property] : undefined;
   return typeof value === 'function' ? object[property]() : value;
 };
 
-Backbone.utils.defaults = function defaults(obj, from1, from2) {
+utils.defaults = function defaults(obj, from1, from2) {
   [].slice.call(arguments, 1).forEach(function(item) {
     for (var key in item) if (obj[key] === undefined)
       obj[key] = item[key];
@@ -136,7 +136,7 @@ Backbone.utils.defaults = function defaults(obj, from1, from2) {
   return obj;
 };
 
-Backbone.utils.extend = function extend(obj) {
+utils.extend = function extend(obj) {
   [].slice.call(arguments, 1).forEach(function(item) {
     for (var key in item) obj[key] = item[key];
   });
@@ -151,13 +151,13 @@ var htmlEscapes = {
   "'": '&#39;'
 };
 
-Backbone.utils.escape = function escape(string) {
+utils.escape = function escape(string) {
   return string == null ? '' : String(string).replace(/[&<>"']/g, function(match) {
     return htmlEscapes[match];
   });
 };
 
-Backbone.utils.sortedIndex = function sortedIndex(array, obj, iterator, context) {
+utils.sortedIndex = function sortedIndex(array, obj, iterator, context) {
   iterator = iterator == null ? Function.prototype :
     (typeof iterator === 'function' ? iterator : function(obj){ return obj[iterator]; });
   var value = iterator.call(context, obj);
@@ -169,7 +169,7 @@ Backbone.utils.sortedIndex = function sortedIndex(array, obj, iterator, context)
   return low;
 };
 
-Backbone.utils.sortBy = function(obj, value, context) {
+utils.sortBy = function(obj, value, context) {
   var iterator = typeof value === 'function' ? value : function(obj){ return obj[value]; };
   return obj
     .map(function(value, index, list) {
@@ -196,7 +196,7 @@ Backbone.utils.sortBy = function(obj, value, context) {
 /** Used to generate unique IDs */
 var idCounter = 0;
 
-Backbone.utils.uniqueId = function uniqueId(prefix) {
+utils.uniqueId = function uniqueId(prefix) {
   var id = ++idCounter + '';
   return prefix ? prefix + id : id;
 };
@@ -292,9 +292,26 @@ var eq = function(a, b, aStack, bStack) {
 };
 
 // Perform a deep comparison to check if two objects are equal.
-Backbone.utils.isEqual = function(a, b) {
+utils.isEqual = function(a, b) {
   return eq(a, b, [], []);
 };
+utils.matchesSelector = (function() {
+  // Suffix.
+  var sfx = 'MatchesSelector';
+  var tag = document.createElement('div');
+  var name;
+  ['matches', 'webkit' + sfx, 'moz' + sfx, 'ms' + sfx].some(function(item) {
+    var valid = (item in tag);
+    name = item;
+    return valid;
+  });
+  if (!name) {
+    throw new Error('Element#matches is not supported');
+  }
+  return function(element, selector) {
+    return element[name](selector)
+  };
+})();
 // Backbone.Events
 // ---------------
 
@@ -1246,25 +1263,6 @@ var delegateEventSplitter = /^(\S+)\s*(.*)$/;
 // List of view options to be merged as properties.
 var viewOptions = ['model', 'collection', 'el', 'id', 'attributes', 'className', 'tagName', 'events'];
 
-
-var matchesSelector = (function() {
-  // Suffix.
-  var sfx = 'MatchesSelector';
-  var tag = document.createElement('div');
-  var name;
-  ['matches', 'webkit' + sfx, 'moz' + sfx, 'ms' + sfx].some(function(item) {
-    var valid = (item in tag);
-    name = item;
-    return valid;
-  });
-  if (!name) {
-    throw new Error('Element#matches is not supported');
-  }
-  return function(element, selector) {
-    return element[name](selector)
-  };
-})();
-
 // Creating a Backbone.View creates its initial element outside of the DOM,
 // if an existing element is not provided...
 var View = Backbone.View = function(options) {
@@ -1313,7 +1311,11 @@ _.extend(View.prototype, Events, {
   // Remove this view by taking the element out of the DOM, and removing any
   // applicable Backbone.Events listeners.
   remove: function() {
-    Backbone.$ ? this.$el.remove() : this.el.parentNode.removeChild(this.el);
+    if (Backbone.$) {
+      this.$el.remove()
+    } else if (this.el.parentNode) {
+      this.el.parentNode.removeChild(this.el);
+    }
     this.stopListening();
     return this;
   },
@@ -1341,11 +1343,19 @@ _.extend(View.prototype, Events, {
       selector = null;
     }
 
+    if (typeof callback !== 'function') {
+      throw new TypeError('View#delegate expects callback function');
+    }
+
     var root = this.el;
     var bound = callback.bind(this);
     var handler = selector ? function(event) {
+      // if (event.target === root) {
+      //   event.delegateTarget = el;
+      //   return bound(event);
+      // }
       for (var el = event.target; el && el !== root; el = el.parentNode) {
-        if (matchesSelector(el, selector)) {
+        if (utils.matchesSelector(el, selector)) {
           event.delegateTarget = el;
           return bound(event);
         }
@@ -1357,6 +1367,7 @@ _.extend(View.prototype, Events, {
       eventName: eventName, selector: selector,
       callback: callback, handler: handler
     });
+    return handler;
   },
 
   undelegate: function(eventName, selector, callback) {
@@ -1379,7 +1390,8 @@ _.extend(View.prototype, Events, {
       // Remove some handlers.
       handlers
         .filter(function(item) {
-          return item.eventName === eventName && item.callback === callback &&
+          return item.eventName === eventName &&
+            (callback ? item.callback === callback : true) &&
             (selector ? item.selector === selector : true);
         })
         .forEach(function(item) {
