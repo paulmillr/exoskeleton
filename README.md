@@ -1,13 +1,10 @@
-# scoliosis
+# Scoliosis
 
-Experiment in making better Backbone.js drop-in replacement.
+Faster and leaner Backbone.js drop-in replacement
 
 ## What already works
 All features you need for real-world app seem to be working.
-
-All software tests are passing:
-
-(libs = underscore and jquery)
+All software tests are passing: (libs = underscore and jquery)
 
 * Backbone: **with and without** libs
 * [Chaplin](http://chaplinjs.org): **with and without** libs
