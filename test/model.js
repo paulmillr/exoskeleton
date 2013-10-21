@@ -110,7 +110,7 @@
     equal(model.url(), '/nested/1/collection/2');
   });
 
-  // scoliosis only supports these if underscore included. Otherwise use native
+  // Exoskeleton only supports these if underscore included. Otherwise use native
   // test("underscore methods", 5, function() {
   //   var model = new Backbone.Model({ 'foo': 'a', 'bar': 'b', 'baz': 'c' });
   //   var model2 = model.clone();
@@ -1116,7 +1116,7 @@
   });
 
   /////////////////////
-  // Scoliosis-specific
+  // Exoskeleton-specific
   /////////////////////
   test("Attrs with Object.create(null)", 11, function() {
     var props = ['constructor', 'hasOwnProperty', 'isPrototypeOf', 'toString', 'valueOf'];

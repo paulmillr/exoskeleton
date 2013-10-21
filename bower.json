@@ -1,13 +1,13 @@
 {
-  "name": "scoliosis",
-  "main": "scoliosis.js",
+  "name": "exoskeleton",
+  "main": "exoskeleton.js",
   "version": "0.2.2",
-  "homepage": "https://github.com/paulmillr/scoliosis",
+  "homepage": "https://github.com/paulmillr/exoskeletons",
   "author": "Paul Miller (http://paulmillr.com)",
-  "description": "Experiment in making better Backbone.js drop-in replacement.",
+  "description": "Faster and leaner Backbone.js drop-in replacement.",
   "keywords": [
     "Backbone",
-    "Scoliosis",
+    "Exoskeleton",
     "MVC",
     "client",
     "browser",

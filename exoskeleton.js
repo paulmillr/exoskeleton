@@ -1,11 +1,11 @@
-//     Scoliosis.js 0.2.2
-
-//     (c) 2013 Paul Miller (http://paulmillr.com)
-//     (c) 2010-2011 Jeremy Ashkenas, DocumentCloud Inc.
-//     (c) 2011-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
-//     Scoliosis may be freely distributed under the MIT license.
-//     For all details and documentation:
-//     https://github.com/paulmillr/scoliosis
+/*!
+ * Exoskeleton.js 0.3.0
+ * (c) 2013 Paul Miller <http://paulmillr.com>
+ * Based on Backbone.js
+ * (c) 2010-2013 Jeremy Ashkenas, DocumentCloud
+ * Exoskeleton may be freely distributed under the MIT license.
+ * For all details and documentation: <http://exoskel.at>
+ */
 
 (function(factory) {
   if (typeof define === 'function' && define.amd) {
@@ -51,7 +51,7 @@
   var splice = array.splice;
 
   // Current version of the library. Keep in sync with `package.json`.
-  Backbone.VERSION = '1.0.0';
+  // Backbone.VERSION = '1.0.0';
 
   // Runs Backbone.js in *noConflict* mode, returning the `Backbone` variable
   // to its previous owner. Returns a reference to this Backbone object.
@@ -1288,7 +1288,7 @@ _.extend(View.prototype, Events, {
     return Backbone.$ ? this.$el.find(selector) : this.findAll(selector);
   },
 
-  // Scoliosis-related DOM methods.
+  // Exoskeleton-related DOM methods.
   find: function(selector) {
     return this.el.querySelector(selector);
   },
@@ -1422,7 +1422,7 @@ _.extend(View.prototype, Events, {
     for (var key in events) {
       var method = events[key];
       if (typeof method !== 'function') method = this[events[key]];
-      if (!method) continue;
+      // if (!method) continue;
 
       var match = key.match(delegateEventSplitter);
       var eventName = match[1], selector = match[2];

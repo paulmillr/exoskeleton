@@ -136,7 +136,7 @@
     equal(new View().el, document.body);
   });
 
-  // not supported in Scoliosis
+  // not supported in Exoskeleton
   test("_ensureElement with string el", 3, function() {
     var View = Backbone.View.extend({
       el: "body"

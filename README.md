@@ -1,6 +1,6 @@
-# Scoliosis
+# Exoskeleton
 
-Faster and leaner Backbone.js drop-in replacement
+Faster and leaner Backbone.js drop-in replacement.
 
 ## What already works
 All features you need for real-world app are working.

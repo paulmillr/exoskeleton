@@ -533,7 +533,7 @@
     Backbone.history.navigate('fragment');
   });
 
-  // Not supported in Scoliosis
+  // Not supported in Exoskeleton
   // test("Transition from pushState to hashChange.", 1, function() {
   //   Backbone.history.stop();
   //   location.replace('http://example.com/root/x/y?a=b');
@@ -561,7 +561,7 @@
       history: {
         pushState: function(){},
         replaceState: function(state, title, url){
-          // CHANGED BY SCOLIOSIS
+          // CHANGED BY Exoskeleton
           // strictEqual(url, '/root/x/y?a=b');
           strictEqual(url, '/root/x/y');
         }
@@ -721,7 +721,7 @@
 
     var Router = Backbone.Router.extend({
       routes: {
-        // fixed by Scoliosis
+        // fixed by Exoskeleton
         // path: function() { ok(true); }
         'path?query': function() { ok(true); }
       }
@@ -733,7 +733,7 @@
     Backbone.history.navigate('path?query#hash', true);
   });
 
-  // SCOLIOSIS-SPECIFIC
+  // Exoskeleton-SPECIFIC
   test('History allows querystring params with pushState', 1, function() {
     Backbone.history.stop();
     location.replace('http://example.com/path');

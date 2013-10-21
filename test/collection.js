@@ -516,7 +516,7 @@
     equal(JSON.stringify(col), '[{"id":3,"label":"a"},{"id":2,"label":"b"},{"id":1,"label":"c"},{"id":0,"label":"d"}]');
   });
 
-  // Not implemented in Scoliosis
+  // Not implemented in Exoskeleton
   // test("where and findWhere", 8, function() {
   //   var model = new Backbone.Model({a: 1});
   //   var coll = new Backbone.Collection([
@@ -541,7 +541,7 @@
     equal(col.some(function(model){ return model.id === 100; }), false);
     equal(col.some(function(model){ return model.id === 0; }), true);
     equal(col.indexOf(b), 1);
-    // Not included in Scoliosis
+    // Not included in Exoskeleton
     // equal(col.size(), 4);
     // equal(col.rest().length, 3);
     // ok(!_.include(col.rest(), a));
@@ -782,7 +782,7 @@
     deepEqual(collection.pluck('id'), [2, 1]);
   });
 
-  // Not implemented in Scoliosis
+  // Not implemented in Exoskeleton
   // test("#1655 - groupBy can be used with a string argument.", 3, function() {
   //   var collection = new Backbone.Collection([{x: 1}, {x: 2}]);
   //   var grouped = collection.groupBy('x');
