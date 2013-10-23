@@ -1,6 +1,6 @@
 # Exoskeleton
 
-Faster and leaner Backbone.js drop-in replacement.
+Exoskeleton is a faster and leaner Backbone for your HTML5 apps.
 
 http://exosjs.com
 
