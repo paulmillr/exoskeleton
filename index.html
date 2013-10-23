@@ -1,0 +1,127 @@
+---
+layout: base
+---
+
+<div class="social-buttons">
+  <iframe class="social-button-twitter" allowtransparency="true" frameborder="0" scrolling="no" src="https://platform.twitter.com/widgets/follow_button.html?screen_name=paulmillr&show_count=true&size=l" style="width:190px; height:30px;"></iframe>
+  <iframe class="social-button-github" src="http://ghbtns.com/github-btn.html?user=paulmillr&repo=exoskeleton&type=watch&count=true&size=large" allowtransparency="true" frameborder="0" scrolling="0" width="165px" height="30px"></iframe>
+</div>
+
+<p>
+Exoskeleton is a faster and leaner <a href="http://backbonejs.org/">Backbone</a> for your HTML5 apps.
+</p>
+
+<div class="downloads clearfix">
+  <div class="primary-downloads">
+    <div class="download-block">
+      <a class="dl-button primary" href="http://chaplinjs.org/downloads/chaplin.js">Get exoskeleton.js</a>
+      <p>or install with package managers:</p>
+      <ul>
+        <li><code>bower install --save exoskeleton</code></li>
+        <li><code>component install paulmillr/exoskeleton</code></li>
+      </ul>
+    </div>
+    <div class="download-block">
+      <a class="dl-button primary" href="http://chaplinjs.org/downloads/chaplin.min.js">Minified (7K gzip)</a>
+    </div>
+  </div>
+</div>
+
+<div class="downloads why-answers clearfix">
+  <h2>Why Exoskeleton</h2>
+  <div class="download-block">
+    <div class="dl-button dummy">Optional deps</div>
+    <p>Both <strong>jQuery</strong> and <strong>Underscore</strong> are 100% optional in Exoskeleton. You can just throw them away.</p>
+    <p>Instead of including <em>40K</em> of gzipped javascript, you just need to include <em>7K</em> — that's almost <strong>six times less</strong>!</p>
+  </div>
+
+  <div class="download-block">
+    <div class="dl-button dummy">Faster</div>
+    <p>Your views will be rendered up to <strong>5.5 times faster</strong>* when Exoskeleton is used without jQuery. They will also consume 2 times less memory.</p>
+    <p>Mobile apps want this kind of performance.</p>
+    <p><small>* <a href="https://github.com/paulmillr/exoskeleton/issues/14#issuecomment-26736727">Tested</a> view creating / rendering time using Exoskeleton against Backbone 1.1 + jQuery 2.0 in Chrome and Firefox.</small></p>
+  </div>
+
+  <div class="download-block first">
+    <div class="dl-button dummy">Custom builds</div>
+    <p>Don't need Router? No problem. Using your own Models? You've got it!</p>
+    <p>All stuff for old browsers is out by default — IE9 is the minimum here.</p>
+  </div>
+
+  <div class="download-block">
+    <div class="dl-button dummy">Drop-in replacement</div>
+    <p>You can just replace Backbone with Exoskeleton and it will all work as before.</p>
+    <p>Exoskeleton passes 100% of Backbone and <a href="http://chaplinjs.org">Chaplin</a> test suites with or without dependencies.</p>
+    <p>Support for optional deps in other frameworks like <a href="http://marionettejs.com">Marionette</a> is coming soon, our team is on it!</p>
+  </div>
+  <div class="download-block">
+    <div class="dl-button dummy">AMD &amp; ES6 modules</div>
+    <p>Exoskeleton is AMD-friendly.</p>
+  </div>
+
+  <div class="download-block">
+    <div class="dl-button dummy">Bower &amp; component</div>
+    <p>Package managers support is here. Manage your exoskeleton dependency like it's 2013.</p>
+  </div>
+
+  <div class="download-block first">
+    <div class="dl-button dummy">Regularly updated</div>
+    <p>Regular <a href="http://semver.org">semver</a>-compatible updates, that's it.</p>
+  </div>
+
+  <div class="download-block">
+    <div class="dl-button dummy">Custom features</div>
+    <p>Exoskeleton incorporates other great features and bugfixes.</p>
+  </div>
+</div>
+
+<h2>Custom features</h2>
+
+<ul>
+  <li>Router with query string support</li>
+  <li><code>View#delegateEvents</code> has <code>keepOld</code> option that allows to preserve old events.</li>
+  <li>All params are allowed for model attributes, for example <code>model.get('constructor')</code> <a href="https://github.com/jashkenas/backbone/issues/1495">(backbone#1495)</a></li>
+  <li>Ultra-fast event delegation via native <code>View#delegate</code> method.</li>
+</ul>
+
+<h2>Differences from Backbone</h2>
+
+<ul>
+<li>
+<p>In no-underscore environment, there are no underscore-inspired
+Collection methods (each, pluck etc.), but there are ES5-inspired methods:</p>
+
+<p><code>forEach, map, filter, some, every, reduce, reduceRight, indexOf, lastIndexOf</code></p>
+
+<p>Also, no underscore-inspired Model methods at all.</p>
+</li>
+<li><p>emulateHTTP and emulateJSON were removed</p></li>
+</ul>
+
+<h2>Documentation, getting started and other stuff</h2>
+
+<p>
+  For initial release, you can check out <a href="http://backbonejs.org">backbone</a> docs. Exoskeleton documentation coming soon.
+</p>
+
+<p>Check out also:</p>
+
+<ul>
+  <li><a href="http://addyosmani.github.io/backbone-fundamentals/">Developing Backbone apps by Addy Osmani</a></li>
+  <li><a href="https://github.com/jashkenas/backbone/wiki/Tutorials%2C-blog-posts-and-example-sites">Great list of tutorials and blog posts on Backbone wiki</a></li>
+  <li><a href="https://github.com/jashkenas/backbone/wiki/Extensions%2C-Plugins%2C-Resources">Extensions, plugins and resources</a></li>
+</ul>
+
+<h2>Brought to you by</h2>
+
+<p class="builders">
+  <a href="http://paulmillr.com/" rel="author"><img src="https://secure.gravatar.com/avatar/d342e4ef045c54a6a6f41d070d8a0406" width="48" height="48" alt="Paul Miller">
+   <span class="name">Paul</span> Miller</a>
+
+  <a href="https://github.com/akre54" rel="author"><img src="https://secure.gravatar.com/avatar/cdebe55961ee3852f4bb72c0d03e0df5" width="48" height="48" alt="Adam Krebs">
+   <span class="name">Adam</span> Krebs</a>
+</p>
+
+<footer>
+  <p><small>Hosted on <a href="https://github.com/paulmillr/exoskeleton/tree/gh-pages">GitHub Pages</a>. The content on this website is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/3.0/deed.en_US">CC BY 3.0</a>.</small></p>
+</footer>
