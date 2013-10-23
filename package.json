@@ -1,0 +1,31 @@
+{
+  "name": "exoskeleton",
+  "version": "0.3.0",
+  "description": "Faster and leaner Backbone for your HTML5 apps.",
+  "main": "exoskeleton.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/paulmillr/exoskeleton.git"
+  },
+  "keywords": [
+    "Backbone",
+    "Exoskeleton",
+    "MVC",
+    "client",
+    "browser",
+    "model",
+    "view",
+    "controller"
+  ],
+  "author": "Paul Miller (http://paulmillr.com)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/paulmillr/exoskeleton/issues"
+  }
+}
