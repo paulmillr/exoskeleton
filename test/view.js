@@ -83,10 +83,16 @@
   });
 
 
-  test("delegateEvents ignore undefined methods", 0, function() {
+  // test("delegateEvents ignore undefined methods", 0, function() {
+  //   var view = new Backbone.View({el: '<p></p>'});
+  //   view.delegateEvents({'click': 'undefinedMethod'});
+  //   view.$el.trigger('click');
+  // });
+  test("delegateEvents DOES NOT ignore undefined methods", 1, function(assert) {
     var view = new Backbone.View({el: '<p></p>'});
-    view.delegateEvents({'click': 'undefinedMethod'});
-    view.$el.trigger('click');
+    assert.throws(function() {
+      view.delegateEvents({'click': 'undefinedMethod'})
+    });
   });
 
   test("undelegateEvents", 6, function() {
