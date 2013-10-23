@@ -77,9 +77,12 @@ Exoskeleton is a faster and leaner <a href="http://backbonejs.org/">Backbone</a>
 
 <h2>Custom features</h2>
 
+Also take a look at Exoskeleton <a href="https://github.com/paulmillr/exoskeleton/blob/master/CHANGELOG.md">change log</a>.
+
 <ul>
   <li>Router with query string support</li>
   <li><code>View#delegateEvents</code> has <code>keepOld</code> option that allows to preserve old events.</li>
+  <li>Declaratively defined view events which point to non-existing handler functions are no longer tolerated / skipped. Early error is thrown instead.</li>
   <li>All params are allowed for model attributes, for example <code>model.get('constructor')</code> <a href="https://github.com/jashkenas/backbone/issues/1495">(backbone#1495)</a></li>
   <li>Ultra-fast event delegation via native <code>View#delegate</code> method.</li>
 </ul>
