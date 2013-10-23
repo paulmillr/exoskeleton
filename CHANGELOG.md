@@ -1,3 +1,8 @@
+# Exoskeleton 0.3.0 (24 October 2013)
+* Declaratively defined view events which point to
+  non-existing handler functions are no longer tolerated / skipped.
+  Early error is thrown instead.
+
 # Exoskeleton 0.2.2 (21 October 2013)
 * All Chaplin tests are now passing.
 * Added `utils.matchesSelector`.

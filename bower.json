@@ -1,10 +1,10 @@
 {
   "name": "exoskeleton",
   "main": "exoskeleton.js",
-  "version": "0.2.2",
-  "homepage": "https://github.com/paulmillr/exoskeletons",
+  "version": "0.3.0",
+  "homepage": "https://github.com/paulmillr/exoskeleton",
   "author": "Paul Miller (http://paulmillr.com)",
-  "description": "Faster and leaner Backbone.js drop-in replacement.",
+  "description": "Faster and leaner Backbone for your HTML5 apps.",
   "keywords": [
     "Backbone",
     "Exoskeleton",
@@ -24,6 +24,7 @@
   "license": "MIT",
   "ignore": [
     "**/.*",
+    "lib"
     "node_modules",
     "bower_components",
     "test",

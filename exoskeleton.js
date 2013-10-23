@@ -861,7 +861,7 @@ _.extend(Collection.prototype, Events, {
 
   // The default model for a collection is just a **Backbone.Model**.
   // This should be overridden in most cases.
-  model: Model,
+  model: typeof Model === 'undefined' ? null : Model,
 
   // Initialize is an empty function by default. Override it with your own
   // initialization logic.
@@ -1157,7 +1157,7 @@ _.extend(Collection.prototype, Events, {
   // Prepare a hash of attributes (or other model) to be added to this
   // collection.
   _prepareModel: function(attrs, options) {
-    if (attrs instanceof Model) {
+    if (attrs instanceof Collection.prototype.model) {
       if (!attrs.collection) attrs.collection = this;
       return attrs;
     }
@@ -1356,6 +1356,7 @@ _.extend(View.prototype, Events, {
       // }
       for (var el = event.target; el && el !== root; el = el.parentNode) {
         if (utils.matchesSelector(el, selector)) {
+          // event.currentTarget or event.target are read-only.
           event.delegateTarget = el;
           return bound(event);
         }

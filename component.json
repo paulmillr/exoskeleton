@@ -1,8 +1,8 @@
 {
   "name": "exoskeleton",
   "repo": "paulmillr/exoskeleton",
-  "description": "Faster and leaner Backbone.js drop-in replacement.",
-  "version": "0.2.2",
+  "description": "Faster and leaner Backbone for your HTML5 apps.",
+  "version": "0.3.0",
   "keywords": [
     "Backbone",
     "Exoskeleton",
