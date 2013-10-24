@@ -3,8 +3,61 @@
 // [LocalStorage adapter](backbone-localstorage.html)
 // to persist Backbone models within your browser.
 
-// Load the application once the DOM is ready, using `jQuery.ready`:
-$(function(){
+(function() {
+
+  // Hold onto local copy of _ from Exoskeleton's utils
+  var _ = Backbone.utils;
+
+  // Shim needed utils for this example. A real-world app would provide its own
+  // templating solution
+
+  // By default, Underscore uses ERB-style template delimiters, change the
+  // following template settings to use alternative delimiters.
+  _.templateSettings = {
+    evaluate    : /<%([\s\S]+?)%>/g,
+    interpolate : /<%=([\s\S]+?)%>/g,
+    escape      : /<%-([\s\S]+?)%>/g
+  };
+
+  // When customizing `templateSettings`, if you don't want to define an
+  // interpolation, evaluation or escaping regex, we need one that is
+  // guaranteed not to match.
+  var noMatch = /.^/;
+
+  // Within an interpolation, evaluation, or escaping, remove HTML escaping
+  // that had been previously added.
+  var unescape = function(code) {
+    return code.replace(/\\\\/g, '\\').replace(/\\'/g, "'");
+  };
+
+  // JavaScript micro-templating, similar to John Resig's implementation.
+  // Underscore templating handles arbitrary delimiters, preserves whitespace,
+  // and correctly escapes quotes within interpolated code.
+  _.template = function(str, data) {
+    var c  = _.templateSettings;
+    var tmpl = 'var __p=[],print=function(){__p.push.apply(__p,arguments);};' +
+      'with(obj||{}){__p.push(\'' +
+      str.replace(/\\/g, '\\\\')
+         .replace(/'/g, "\\'")
+         .replace(c.escape || noMatch, function(match, code) {
+           return "',_.escape(" + unescape(code) + "),'";
+         })
+         .replace(c.interpolate || noMatch, function(match, code) {
+           return "'," + unescape(code) + ",'";
+         })
+         .replace(c.evaluate || noMatch, function(match, code) {
+           return "');" + unescape(code).replace(/[\r\n\t]/g, ' ') + ";__p.push('";
+         })
+         .replace(/\r/g, '\\r')
+         .replace(/\n/g, '\\n')
+         .replace(/\t/g, '\\t')
+         + "');}return __p.join('');";
+    var func = new Function('obj', '_', tmpl);
+    if (data) return func(data, _);
+    return function(data) {
+      return func.call(this, data, _);
+    };
+  };
 
   // Todo Model
   // ----------
@@ -55,7 +108,8 @@ $(function(){
     // GUID in the database. This generates the next order number for new items.
     nextOrder: function() {
       if (!this.length) return 1;
-      return this.last().get('order') + 1;
+      var last = this.models[this.length - 1];
+      return last.get('order') + 1;
     },
 
     // Todos are sorted by their original insertion order.
@@ -76,7 +130,7 @@ $(function(){
     tagName:  "li",
 
     // Cache the template function for a single item.
-    template: _.template($('#item-template').html()),
+    template: _.template(document.getElementById('item-template').innerHTML),
 
     // The DOM events specific to an item.
     events: {
@@ -97,8 +151,8 @@ $(function(){
 
     // Re-render the titles of the todo item.
     render: function() {
-      this.$el.html(this.template(this.model.toJSON()));
-      this.$el.toggleClass('done', this.model.get('done'));
+      this.el.innerHTML = this.template(this.model.toJSON());
+      this.el.classList.toggle('done', this.model.get('done'));
       this.input = this.$('.edit');
       return this;
     },
@@ -110,18 +164,18 @@ $(function(){
 
     // Switch this view into `"editing"` mode, displaying the input field.
     edit: function() {
-      this.$el.addClass("editing");
+      this.el.classList.add("editing");
       this.input.focus();
     },
 
     // Close the `"editing"` mode, saving changes to the todo.
     close: function() {
-      var value = this.input.val();
+      var value = this.input.value;
       if (!value) {
         this.clear();
       } else {
         this.model.save({title: value});
-        this.$el.removeClass("editing");
+        this.el.classList.remove("editing");
       }
     },
 
@@ -145,10 +199,10 @@ $(function(){
 
     // Instead of generating a new element, bind to the existing skeleton of
     // the App already present in the HTML.
-    el: $("#todoapp"),
+    el: "#todoapp",
 
     // Our template for the line of statistics at the bottom of the app.
-    statsTemplate: _.template($('#stats-template').html()),
+    statsTemplate: _.template(document.getElementById('stats-template').innerHTML),
 
     // Delegated events for creating new items, and clearing completed ones.
     events: {
@@ -162,15 +216,15 @@ $(function(){
     // loading any preexisting todos that might be saved in *localStorage*.
     initialize: function() {
 
-      this.input = this.$("#new-todo");
-      this.allCheckbox = this.$("#toggle-all")[0];
+      this.input = this.find("#new-todo");
+      this.allCheckbox = this.find("#toggle-all");
 
       this.listenTo(Todos, 'add', this.addOne);
       this.listenTo(Todos, 'reset', this.addAll);
       this.listenTo(Todos, 'all', this.render);
 
-      this.footer = this.$('footer');
-      this.main = $('#main');
+      this.footer = this.find('footer');
+      this.main = this.find('#main');
 
       Todos.fetch();
     },
@@ -182,12 +236,12 @@ $(function(){
       var remaining = Todos.remaining().length;
 
       if (Todos.length) {
-        this.main.show();
-        this.footer.show();
-        this.footer.html(this.statsTemplate({done: done, remaining: remaining}));
+        this.main.style.display = 'block';
+        this.footer.style.display = 'block';
+        this.footer.innerHTML = this.statsTemplate({done: done, remaining: remaining});
       } else {
-        this.main.hide();
-        this.footer.hide();
+        this.main.style.display = 'none';
+        this.footer.style.display = 'none';
       }
 
       this.allCheckbox.checked = !remaining;
@@ -197,7 +251,7 @@ $(function(){
     // appending its element to the `<ul>`.
     addOne: function(todo) {
       var view = new TodoView({model: todo});
-      this.$("#todo-list").append(view.render().el);
+      this.find("#todo-list").appendChild(view.render().el);
     },
 
     // Add all items in the **Todos** collection at once.
@@ -209,21 +263,23 @@ $(function(){
     // persisting it to *localStorage*.
     createOnEnter: function(e) {
       if (e.keyCode != 13) return;
-      if (!this.input.val()) return;
+      if (!this.input.value) return;
 
-      Todos.create({title: this.input.val()});
-      this.input.val('');
+      Todos.create({title: this.input.value});
+      this.input.value = '';
     },
 
     // Clear all done todo items, destroying their models.
     clearCompleted: function() {
-      _.invoke(Todos.done(), 'destroy');
+      Todos.done().forEach(function(todo) {
+        todo.destroy();
+      });
       return false;
     },
 
     toggleAllComplete: function () {
       var done = this.allCheckbox.checked;
-      Todos.each(function (todo) { todo.save({'done': done}); });
+      Todos.forEach(function (todo) { todo.save({'done': done}); });
     }
 
   });
@@ -231,4 +287,4 @@ $(function(){
   // Finally, we kick things off by creating the **App**.
   var App = new AppView;
 
-});
+})();

@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="utf-8">
-  <title>Backbone.js Todos</title>
+  <title>Exoskeleton.js Todos</title>
   <link rel="stylesheet" href="todos.css"/>
 </head>
 
@@ -38,14 +38,8 @@
     <br />
     <a href="http://jgn.me/">J&eacute;r&ocirc;me Gravel-Niquet</a>.
     <br />Rewritten by: <a href="http://addyosmani.github.com/todomvc">TodoMVC</a>.
+    <br />Rewritten for Exoskeleton by: <a href="http://sberkmada.com/">Adam Krebs</a>.
   </div>
-
-  <script src="../../test/vendor/json2.js"></script>
-  <script src="../../test/vendor/jquery.js"></script>
-  <script src="../../test/vendor/underscore.js"></script>
-  <script src="../../backbone.js"></script>
-  <script src="../backbone.localStorage.js"></script>
-  <script src="todos.js"></script>
 
   <!-- Templates -->
 
@@ -64,6 +58,12 @@
     <% } %>
     <div class="todo-count"><b><%= remaining %></b> <%= remaining == 1 ? 'item' : 'items' %> left</div>
   </script>
+
+
+  <script src="../../exoskeleton.js"></script>
+  <script src="./davy.js"></script>
+  <script src="../backbone.localStorage.js"></script>
+  <script src="todos.js"></script>
 
   </body>
 </html>

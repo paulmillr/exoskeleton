@@ -1,4 +1,10 @@
 /**
+ * Exoskeleton localStorage Adapter
+ * for use with Exoskeleton without underscore / jquery
+ *
+ *
+ * Based on
+ * --------
  * Backbone localStorage Adapter
  * Version 1.1.0
  *
@@ -7,21 +13,23 @@
 (function (root, factory) {
    if (typeof define === "function" && define.amd) {
       // AMD. Register as an anonymous module.
-      define(["underscore","backbone"], function(_, Backbone) {
+      define(["backbone", "davy"], function(Backbone, Promise) {
         // Use global variables if the locals are undefined.
-        return factory(_ || root._, Backbone || root.Backbone);
+        return factory(Backbone || root.Backbone, Promise || root.Promise);
       });
    } else {
-      // RequireJS isn't being used. Assume underscore and backbone are loaded in <script> tags
-      factory(_, Backbone);
+      // RequireJS isn't being used. Assume davy and backbone are loaded in <script> tags
+      factory(Backbone, Promise);
    }
-}(this, function(_, Backbone) {
+}(this, function(Backbone, Promise) {
 // A simple module to replace `Backbone.sync` with *localStorage*-based
 // persistence. Models are given GUIDS, and saved into a JSON object. Simple
 // as that.
 
 // Hold reference to Underscore.js and Backbone.js in the closure in order
 // to make things work even if they are removed from the global namespace
+
+var _ = Backbone.utils;
 
 // Generate four random hex digits.
 function S4() {
@@ -65,7 +73,7 @@ _.extend(Backbone.LocalStorage.prototype, {
   // Update a model by replacing its copy in `this.data`.
   update: function(model) {
     this.localStorage().setItem(this.name+"-"+model.id, JSON.stringify(model));
-    if (!_.include(this.records, model.id.toString()))
+    if (!~this.records.indexOf(model.id.toString()))
       this.records.push(model.id.toString()); this.save();
     return this.find(model);
   },
@@ -77,12 +85,13 @@ _.extend(Backbone.LocalStorage.prototype, {
 
   // Return the array of all models currently in storage.
   findAll: function() {
-    return _(this.records).chain()
+    return this.records
       .map(function(id){
         return this.jsonData(this.localStorage().getItem(this.name+"-"+id));
       }, this)
-      .compact()
-      .value();
+      .filter(function(record) {
+        return !!record;
+      });
   },
 
   // Delete a model from `this.data`, returning it.
@@ -90,8 +99,8 @@ _.extend(Backbone.LocalStorage.prototype, {
     if (model.isNew())
       return false
     this.localStorage().removeItem(this.name+"-"+model.id);
-    this.records = _.reject(this.records, function(id){
-      return id === model.id.toString();
+    this.records = this.records.filter(function(id){
+      return id !== model.id.toString();
     });
     this.save();
     return model;
@@ -103,7 +112,7 @@ _.extend(Backbone.LocalStorage.prototype, {
 
   // fix for "illegal access" error on Android when JSON.parse is passed null
   jsonData: function (data) {
-      return data && JSON.parse(data);
+    return data && JSON.parse(data);
   }
 
 });
@@ -114,7 +123,7 @@ _.extend(Backbone.LocalStorage.prototype, {
 Backbone.LocalStorage.sync = window.Store.sync = Backbone.localSync = function(method, model, options) {
   var store = model.localStorage || model.collection.localStorage;
 
-  var resp, errorMessage, syncDfd = $.Deferred && $.Deferred(); //If $ is having Deferred - use it.
+  var resp, errorMessage, syncDfd = new Promise;
 
   try {
 
@@ -145,7 +154,7 @@ Backbone.LocalStorage.sync = window.Store.sync = Backbone.localSync = function(m
     if (options && options.success)
       options.success(resp);
     if (syncDfd)
-      syncDfd.resolve(resp);
+      syncDfd.fulfill(resp);
 
   } else {
     errorMessage = errorMessage ? errorMessage
@@ -161,7 +170,7 @@ Backbone.LocalStorage.sync = window.Store.sync = Backbone.localSync = function(m
   // always execute callback for success and error
   if (options && options.complete) options.complete(resp);
 
-  return syncDfd && syncDfd.promise();
+  return syncDfd;
 };
 
 Backbone.ajaxSync = Backbone.sync;
