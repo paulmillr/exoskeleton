@@ -1,3 +1,6 @@
+# Exoskeleton 0.3.1 (24 October 2013)
+* Fix broken bower.json package
+
 # Exoskeleton 0.3.0 (24 October 2013)
 * Declaratively defined view events which point to
   non-existing handler functions are no longer tolerated / skipped.
