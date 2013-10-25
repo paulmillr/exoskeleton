@@ -10,7 +10,8 @@ All software tests are passing: (libs = underscore and jquery)
 
 * Backbone: **with and without** libs
 * [Chaplin](http://chaplinjs.org): **with and without** libs
-* Marionette and other popular plugins: WIP.
+
+Marionette and other popular plugins: WIP.
 
 ## Building
 
