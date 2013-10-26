@@ -15,6 +15,8 @@ Marionette and other popular plugins: WIP.
 
 ## Building
 
+Default **and custom** builds:
+
     make # Will create exoskeleton.js
     make noutils # If you want to use Underscore and jQuery
                 # and don't want to include `Exoskeleton.utils`.
