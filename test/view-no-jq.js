@@ -200,6 +200,7 @@
   test("multiple views per element", 3, function() {
     var count = 0;
     var $el = document.createElement('p');
+    document.body.appendChild($el);
 
     var View = Backbone.View.extend({
       el: $el,
@@ -221,6 +222,7 @@
     view1.delegateEvents();
     $el.click();
     equal(5, count);
+    document.body.removeChild($el);
   });
 
   var fireEvent = function(target, name) {
@@ -267,6 +269,8 @@
     var button2 = document.createElement('button');
     button1.className = 'button1';
     button2.className = 'button2';
+    document.body.appendChild(button1);
+    document.body.appendChild(button2);
 
     var View = Backbone.View.extend({
       events: {
@@ -281,6 +285,8 @@
 
     button1.click();
     button2.click();
+    document.body.removeChild(button1);
+    document.body.removeChild(button2);
   });
 
   test("#1172 - Clone attributes object", 2, function() {
