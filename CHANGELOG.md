@@ -1,3 +1,8 @@
+# Exoskeleton 0.4.0 (29 October 2013)
+* Fixed IE support.
+* Removed `utils.sortedIndex`.
+* Small optimisations.
+
 # Exoskeleton 0.3.1 (24 October 2013)
 * Fix broken bower.json package
 
