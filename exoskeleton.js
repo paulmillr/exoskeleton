@@ -1,10 +1,10 @@
 /*!
- * Exoskeleton.js 0.3.1
+ * Exoskeleton.js 0.4.0
  * (c) 2013 Paul Miller <http://paulmillr.com>
  * Based on Backbone.js
  * (c) 2010-2013 Jeremy Ashkenas, DocumentCloud
  * Exoskeleton may be freely distributed under the MIT license.
- * For all details and documentation: <http://exoskel.at>
+ * For all details and documentation: <http://exosjs.com>
  */
 
 (function(factory) {
@@ -48,7 +48,7 @@
   var array = [];
   var push = array.push;
   var slice = array.slice;
-  var splice = array.splice;
+  var toString = ({}).toString;
 
   // Current version of the library. Keep in sync with `package.json`.
   // Backbone.VERSION = '1.0.0';
@@ -128,8 +128,8 @@ utils.result = function result(object, property) {
   return typeof value === 'function' ? object[property]() : value;
 };
 
-utils.defaults = function defaults(obj, from1, from2) {
-  [].slice.call(arguments, 1).forEach(function(item) {
+utils.defaults = function defaults(obj) {
+  slice.call(arguments, 1).forEach(function(item) {
     for (var key in item) if (obj[key] === undefined)
       obj[key] = item[key];
   });
@@ -137,7 +137,7 @@ utils.defaults = function defaults(obj, from1, from2) {
 };
 
 utils.extend = function extend(obj) {
-  [].slice.call(arguments, 1).forEach(function(item) {
+  slice.call(arguments, 1).forEach(function(item) {
     for (var key in item) obj[key] = item[key];
   });
   return obj;
@@ -155,18 +155,6 @@ utils.escape = function escape(string) {
   return string == null ? '' : String(string).replace(/[&<>"']/g, function(match) {
     return htmlEscapes[match];
   });
-};
-
-utils.sortedIndex = function sortedIndex(array, obj, iterator, context) {
-  iterator = iterator == null ? Function.prototype :
-    (typeof iterator === 'function' ? iterator : function(obj){ return obj[iterator]; });
-  var value = iterator.call(context, obj);
-  var low = 0, high = array.length;
-  while (low < high) {
-    var mid = (low + high) >>> 1;
-    iterator.call(context, array[mid]) < value ? low = mid + 1 : high = mid;
-  }
-  return low;
 };
 
 utils.sortBy = function(obj, value, context) {
@@ -257,10 +245,10 @@ var eq = function(a, b, aStack, bStack) {
   bStack.push(b);
   var size = 0, result = true;
   // Recursively compare objects and arrays.
-  if (className == '[object Array]') {
+  if (className === '[object Array]') {
     // Compare array lengths to determine if a deep comparison is necessary.
     size = a.length;
-    result = size == b.length;
+    result = size === b.length;
     if (result) {
       // Deep compare the contents, ignoring non-numeric properties.
       while (size--) {
@@ -295,6 +283,8 @@ var eq = function(a, b, aStack, bStack) {
 utils.isEqual = function(a, b) {
   return eq(a, b, [], []);
 };
+// Usage:
+//   utils.matchesSelector(div, '.something');
 utils.matchesSelector = (function() {
   // Suffix.
   var sfx = 'MatchesSelector';
@@ -309,7 +299,69 @@ utils.matchesSelector = (function() {
     throw new Error('Element#matches is not supported');
   }
   return function(element, selector) {
-    return element[name](selector)
+    return element[name](selector);
+  };
+})();
+
+// Make AJAX request to the server.
+// Usage:
+//   var callback = function(error, data) {console.log('Done.', error, data);};
+//   ajax({url: 'url', method: 'PATCH', data: 'data'}, callback);
+utils.ajax = (function() {
+  var xmlRe = /^(?:application|text)\/xml/;
+  var jsonRe = /^application\/json/;
+
+  var getData = function(accepts, xhr) {
+    if (accepts == null) accepts = xhr.getResponseHeader('content-type');
+    if (xmlRe.test(accepts)) {
+      return xhr.responseXML;
+    } else if (jsonRe.test(accepts)) {
+      return JSON.parse(xhr.responseText);
+    } else {
+      return xhr.responseText;
+    }
+  };
+
+  var isValid = function(xhr) {
+    return (xhr.status >= 200 && xhr.status < 300) ||
+      (xhr.status === 304) ||
+      (xhr.status === 0 && window.location.protocol === 'file:')
+  };
+
+  var end = function(xhr, options, promise) {
+    return function() {
+      if (xhr.readyState !== 4) return;
+
+      var status = xhr.status;
+      var data = getData(options.headers && options.headers.Accept, xhr);
+
+      // Check for validity.
+      if (isValid(xhr)) {
+        if (options.success) options.success(data);
+        if (promise) Backbone.resolveDeferred(promise, true, [data, xhr]);
+      } else {
+        var error = new Error('Server responded with a status of ' + status);
+        error.code = status;
+        if (options.error) options.error(xhr, status, error);
+        if (promise) Backbone.resolveDeferred(promise, false, [xhr]);
+      }
+    }
+  };
+
+  return function(options) {
+    if (options == null) throw new Error('You must provide options');
+    if (options.method == null) options.method = 'GET';
+
+    var xhr = new XMLHttpRequest();
+    var promise = Backbone.Deferred && Backbone.Deferred();
+    if (options.credentials) options.withCredentials = true;
+    xhr.addEventListener('readystatechange', end(xhr, options, promise));
+    xhr.open(options.method, options.url, true);
+    if (options.headers) for (var key in options.headers) {
+      xhr.setRequestHeader(key, options.headers[key]);
+    }
+    xhr.send(options.data);
+    return promise;
   };
 })();
 // Backbone.Events
@@ -330,7 +382,8 @@ var Events = Backbone.Events = {
   // Bind an event to a `callback` function. Passing `"all"` will bind
   // the callback to all events fired.
   on: function(name, callback, context) {
-    if (!eventsApi(this, 'on', name, [callback, context]) || !callback) return this;
+    if (!eventsApi(this, 'on', name, [callback, context]) || !callback)
+      return this;
     this._events || (this._events = {});
     var events = this._events[name] || (this._events[name] = []);
     events.push({callback: callback, context: context, ctx: context || this});
@@ -340,7 +393,8 @@ var Events = Backbone.Events = {
   // Bind an event to only be triggered a single time. After the first time
   // the callback is invoked, it will be removed.
   once: function(name, callback, context) {
-    if (!eventsApi(this, 'once', name, [callback, context]) || !callback) return this;
+    if (!eventsApi(this, 'once', name, [callback, context]) || !callback)
+      return this;
     var self = this;
     var ran;
 
@@ -360,7 +414,8 @@ var Events = Backbone.Events = {
   // callbacks for all events.
   off: function(name, callback, context) {
     var retain, ev, events, names, i, l, j, k;
-    if (!this._events || !eventsApi(this, 'off', name, [callback, context])) return this;
+    if (!this._events || !eventsApi(this, 'off', name, [callback, context]))
+      return this;
     if (!name && !callback && !context) {
       this._events = {};
       return this;
@@ -374,7 +429,8 @@ var Events = Backbone.Events = {
         if (callback || context) {
           for (j = 0, k = events.length; j < k; j++) {
             ev = events[j];
-            if ((callback && callback !== ev.callback && callback !== ev.callback._callback) ||
+            if ((callback && callback !== ev.callback &&
+                callback !== ev.callback._callback) ||
                 (context && context !== ev.context)) {
               retain.push(ev);
             }
@@ -413,7 +469,9 @@ var Events = Backbone.Events = {
     for (var id in listeningTo) {
       obj = listeningTo[id];
       obj.off(name, callback, this);
-      if (remove || !Object.keys(obj._events).length) delete this._listeningTo[id];
+      if (remove || !Object.keys(obj._events).length) {
+        delete this._listeningTo[id];
+      }
     }
     return this;
   }
@@ -428,11 +486,14 @@ var eventSplitter = /\s+/;
 // in terms of the existing API.
 var eventsApi = function(obj, action, name, rest) {
   if (!name) return true;
+  var arr;
 
   // Handle event maps.
   if (typeof name === 'object') {
     for (var key in name) {
-      obj[action].apply(obj, [key, name[key]].concat(rest));
+      arr = [key, name[key]];
+      push.apply(arr, rest);
+      obj[action].apply(obj, arr);
     }
     return false;
   }
@@ -441,7 +502,9 @@ var eventsApi = function(obj, action, name, rest) {
   if (eventSplitter.test(name)) {
     var names = name.split(eventSplitter);
     for (var i = 0, l = names.length; i < l; i++) {
-      obj[action].apply(obj, [names[i]].concat(rest));
+      arr = [names[i]];
+      push.apply(arr, rest);
+      obj[action].apply(obj, arr);
     }
     return false;
   }
@@ -1312,7 +1375,7 @@ _.extend(View.prototype, Events, {
   // applicable Backbone.Events listeners.
   remove: function() {
     if (Backbone.$) {
-      this.$el.remove()
+      this.$el.remove();
     } else if (this.el.parentNode) {
       this.el.parentNode.removeChild(this.el);
     }
@@ -1350,10 +1413,6 @@ _.extend(View.prototype, Events, {
     var root = this.el;
     var bound = callback.bind(this);
     var handler = selector ? function(event) {
-      // if (event.target === root) {
-      //   event.delegateTarget = el;
-      //   return bound(event);
-      // }
       for (var el = event.target; el && el !== root; el = el.parentNode) {
         if (utils.matchesSelector(el, selector)) {
           // event.currentTarget or event.target are read-only.
@@ -1433,7 +1492,7 @@ _.extend(View.prototype, Events, {
         method = method.bind(this);
         this.$el.on(eventName, (selector ? selector : null), method);
       } else {
-        this.delegate(eventName, selector, method)
+        this.delegate(eventName, selector, method);
       }
     }
     return this;
@@ -1550,8 +1609,16 @@ var methodMap = {
 
 // Set the default implementation of `Backbone.ajax` to proxy through to `$`.
 // Override this if you'd like to use a different library.
-Backbone.ajax = function() {
+Backbone.ajax = Backbone.$ ? function() {
   return Backbone.$.ajax.apply(Backbone.$, arguments);
+} : utils.ajax;
+
+Backbone.Deferred = Backbone.$ ? function() {
+  return new Backbone.$.Deferred();
+} : null;
+
+Backbone.resolveDeferred = function(deferred, isResolved, args) {
+  return null;
 };
 // Backbone.Router
 // ---------------
@@ -1771,7 +1838,7 @@ _.extend(History.prototype, Events, {
 
   // Checks the current URL to see if it has changed, and if it has,
   // calls `loadUrl`.
-  checkUrl: function(e) {
+  checkUrl: function() {
     var current = this.getFragment();
     if (current === this.fragment) return false;
     this.loadUrl();
@@ -1843,13 +1910,16 @@ _.extend(History.prototype, Events, {
 });
   // !!!
   // Init.
-  Model.extend = Collection.extend = Router.extend = View.extend = History.extend = Backbone.extend;
+  ['Model', 'Collection', 'Router', 'View', 'History'].forEach(function(name) {
+    var item = Backbone[name];
+    if (item) item.extend = Backbone.extend;
+  });
 
   // Allow the `Backbone` object to serve as a global event bus, for folks who
   // want global "pubsub" in a convenient place.
   _.extend(Backbone, Events);
 
   // Create the default Backbone.history.
-  Backbone.history = new History;
+  Backbone.history = new History();
   return Backbone;
 });

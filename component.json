@@ -2,7 +2,7 @@
   "name": "exoskeleton",
   "repo": "paulmillr/exoskeleton",
   "description": "Faster and leaner Backbone for your HTML5 apps.",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "keywords": [
     "Backbone",
     "Exoskeleton",
@@ -20,6 +20,8 @@
     "qunit": "~1"
   },
   "main": "exoskeleton.js",
-  "scripts": ["exoskeleton.js"],
+  "scripts": [
+    "exoskeleton.js"
+  ],
   "license": "MIT"
 }
