@@ -1,4 +1,7 @@
 # Exoskeleton 0.4.0 (29 October 2013)
+* Default AJAX functionality is now covered by `utils.ajax`
+* Added `Backbone.Deferred` and `Backbone.resolveDeferred`.
+  Promise returned by `Backbone.Deferred` is returned via ajax.
 * Fixed IE support.
 * Removed `utils.sortedIndex`.
 * Small optimisations.
