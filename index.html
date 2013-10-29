@@ -14,7 +14,7 @@ Exoskeleton is a faster and leaner <a href="http://backbonejs.org/">Backbone</a>
 <ul>
   <li>Do you develop mobile app?</li>
   <li>Do you want to optimise your app size and execution speed five-fold?</li>
-  <li>Don't want to have kilobytes of javascript you don't use?</li>
+  <li>Don't want to have kilobytes of JavaScript you don't use?</li>
   <li>Don't want new developers of your app to learn three libraries instead of one?</li>
 </ul>
 
@@ -23,7 +23,7 @@ Exoskeleton is a faster and leaner <a href="http://backbonejs.org/">Backbone</a>
 <div class="downloads clearfix">
   <div class="primary-downloads">
     <div class="download-block">
-      <a class="dl-button primary" href="https://github.com/paulmillr/exoskeleton/releases/download/0.3.0/exoskeleton.js">Get exoskeleton.js</a>
+      <a class="dl-button primary" href="https://github.com/paulmillr/exoskeleton/releases/download/0.4.0/exoskeleton.js">Get exoskeleton.js</a>
       <p>or install with package managers:</p>
       <ul>
         <li><code>bower install --save exoskeleton</code></li>
@@ -31,7 +31,7 @@ Exoskeleton is a faster and leaner <a href="http://backbonejs.org/">Backbone</a>
       </ul>
     </div>
     <div class="download-block">
-      <a class="dl-button primary" href="https://github.com/paulmillr/exoskeleton/releases/download/0.3.0/exoskeleton.min.js">Minified (7K gzip)</a>
+      <a class="dl-button primary" href="https://github.com/paulmillr/exoskeleton/releases/download/0.4.0/exoskeleton.min.js">Minified (8K gzip)</a>
     </div>
   </div>
 </div>
@@ -41,7 +41,7 @@ Exoskeleton is a faster and leaner <a href="http://backbonejs.org/">Backbone</a>
   <div class="download-block">
     <div class="dl-button dummy">Optional deps</div>
     <p>Both <strong>jQuery</strong> and <strong>Underscore</strong> are 100% optional in Exoskeleton. You can just throw them away.</p>
-    <p>Instead of including <em>40K</em> of gzipped javascript, you just need to include <em>7K</em> — that's almost <strong>six times less</strong>!</p>
+    <p>Instead of including <em>40K</em> of gzipped JavaScript, you just need to include <em>8K</em> — that's <strong>five times less</strong>!</p>
   </div>
 
   <div class="download-block">
@@ -99,16 +99,17 @@ Also take a look at Exoskeleton <a href="https://github.com/paulmillr/exoskeleto
 <h2>Differences from Backbone</h2>
 
 <ul>
-<li>
-<p>In no-underscore / lodash environment, there are no underscore-inspired
-Collection methods (each, pluck etc.), but there are ES5-inspired methods:</p>
+  <li>Added <code>Backbone.Deferred</code> and <code>Backbone.resolveDeferred</code></li>
+  <li>
+  <p>In no-underscore / lodash environment, there are no underscore-inspired
+  Collection methods (each, pluck etc.), but there are ES5-inspired methods:</p>
 
-<p><code>forEach, map, filter, some, every, reduce, reduceRight, indexOf, lastIndexOf</code></p>
+  <p><code>forEach, map, filter, some, every, reduce, reduceRight, indexOf, lastIndexOf</code></p>
 
-<p>Also, no underscore-inspired Model methods at all.</p>
-</li>
-<li>emulateHTTP and emulateJSON were removed</li>
-<li>Exoskeleton adds `utils` namespace to store most useful utility functions: <code>matchesSelector, result, defaults, extend, escape, sortBy, uniqueId, isEqual</code>. If you intend to use Exoskeleton with underscore or <a href="http://lodash.com">lodash</a>, you may want to drop utils from custom build.</p></li>
+  <p>Also, no underscore-inspired Model methods at all.</p>
+  </li>
+  <li>emulateHTTP and emulateJSON were removed</li>
+  <li>Exoskeleton adds `utils` namespace to store most useful utility functions: <code>matchesSelector, result, defaults, extend, escape, sortBy, uniqueId, isEqual</code>. If you intend to use Exoskeleton with underscore or <a href="http://lodash.com">lodash</a>, you may want to drop utils from custom build.</p></li>
 </ul>
 
 <h2>Documentation, getting started and other stuff</h2>
