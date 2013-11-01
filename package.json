@@ -7,10 +7,11 @@
     "test": "test"
   },
   "devDependencies": {
+    "bower": "~0.10",
     "phantomjs": "~1.9.2"
   },
   "scripts": {
-    "test": "phantomjs test/vendor/runner.js test/index.html?noglobals=true"
+    "test": "bower install && phantomjs test/vendor/runner.js test/index.html?noglobals=true"
   },
   "repository": {
     "type": "git",
