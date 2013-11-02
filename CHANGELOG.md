@@ -1,3 +1,14 @@
+# Exoskeleton 0.5.0 (2 November 2013)
+* Fixed behaviour in node.js environment.
+* `Backbone.Deferred` now must return actual `Deferred`
+  (`{promise, resolve, reject}` object).
+* Removed `Backbone.resolveDeferred`.
+* Added `beforeSend` option to `utils.ajax`.
+* Moved `utils.ajax({method})` option to `{type}`.
+* When used with custom build of lodash, Collection and Model
+  will now use all existing methods.
+* Improved performance of event triggering.
+
 # Exoskeleton 0.4.0 (29 October 2013)
 * Default AJAX functionality is now covered by `utils.ajax`
 * Added `Backbone.Deferred` and `Backbone.resolveDeferred`.

@@ -1,5 +1,5 @@
 /*!
- * Exoskeleton.js 0.4.0
+ * Exoskeleton.js 0.5.0
  * (c) 2013 Paul Miller <http://paulmillr.com>
  * Based on Backbone.js
  * (c) 2010-2013 Jeremy Ashkenas, DocumentCloud
@@ -11,7 +11,15 @@
   if (typeof define === 'function' && define.amd) {
     define(['underscore', 'jquery'], factory);
   } else if (typeof exports === 'object') {
-    factory(require('underscore'), require('jquery'));
+    var _, jquery;
+    try {
+      _ = require('underscore');
+    } catch(e) { }
+    try {
+      jquery = require('jquery');
+    } catch(e) { }
+
+    factory(_, jquery);
   } else {
     factory(this._, this.jQuery || this.Zepto || this.ender || this.$);
   }
@@ -21,25 +29,26 @@
   // Initial Setup
   // -------------
 
+  // Check whether we are in common.js (e.g. node.js) environment.
+  var isCommonJs = (typeof exports === 'object');
+
   // Save a reference to the global object (`window` in the browser, `exports`
   // on the server).
-  var root = (typeof window === 'undefined') ? exports : window;
+  var root = isCommonJs ? exports : window;
 
   // Save the previous value of the `Backbone` variable, so that it can be
   // restored later on, if `noConflict` is used.
   var previousBackbone = root.Backbone;
+  var previousExoskeleton = root.Exoskeleton;
 
   // The top-level namespace. All public Backbone classes and modules will
   // be attached to this. Exported for both the browser and the server.
-  var Backbone;
-  if (typeof exports !== 'undefined') {
-    Backbone = exports;
-  } else {
-    Backbone = root.Backbone = {};
-  }
+  var Backbone = isCommonJs ?
+    exports :
+    (root.Exoskeleton = root.Backbone = {});
 
   // Underscore replacement.
-  var utils = _ = Backbone.utils = _ || {};
+  var utils = Backbone.utils = _ = (_ || {});
 
   // Hold onto a local reference to `$`. Can be changed at any point.
   Backbone.$ = $;
@@ -57,6 +66,7 @@
   // to its previous owner. Returns a reference to this Backbone object.
   Backbone.noConflict = function() {
     root.Backbone = previousBackbone;
+    root.Exoskeleton = previousExoskeleton;
     return this;
   };
 
@@ -122,6 +132,11 @@
       if (error) error(model, resp, options);
       model.trigger('error', model, resp, options);
     };
+  };
+
+  // Checker for utility methods. Useful for custom builds.
+  var utilExists = function(method) {
+    return typeof _[method] === 'function';
   };
 utils.result = function result(object, property) {
   var value = object ? object[property] : undefined;
@@ -286,18 +301,18 @@ utils.isEqual = function(a, b) {
 // Usage:
 //   utils.matchesSelector(div, '.something');
 utils.matchesSelector = (function() {
+  if (typeof document === 'undefined') return;
   // Suffix.
   var sfx = 'MatchesSelector';
   var tag = document.createElement('div');
   var name;
+  // Detect the right suffix.
   ['matches', 'webkit' + sfx, 'moz' + sfx, 'ms' + sfx].some(function(item) {
     var valid = (item in tag);
     name = item;
     return valid;
   });
-  if (!name) {
-    throw new Error('Element#matches is not supported');
-  }
+  if (!name) throw new Error('Element#matches is not supported');
   return function(element, selector) {
     return element[name](selector);
   };
@@ -306,7 +321,7 @@ utils.matchesSelector = (function() {
 // Make AJAX request to the server.
 // Usage:
 //   var callback = function(error, data) {console.log('Done.', error, data);};
-//   ajax({url: 'url', method: 'PATCH', data: 'data'}, callback);
+//   ajax({url: 'url', type: 'PATCH', data: 'data'}, callback);
 utils.ajax = (function() {
   var xmlRe = /^(?:application|text)\/xml/;
   var jsonRe = /^application\/json/;
@@ -328,7 +343,7 @@ utils.ajax = (function() {
       (xhr.status === 0 && window.location.protocol === 'file:')
   };
 
-  var end = function(xhr, options, promise) {
+  var end = function(xhr, options, deferred) {
     return function() {
       if (xhr.readyState !== 4) return;
 
@@ -338,30 +353,32 @@ utils.ajax = (function() {
       // Check for validity.
       if (isValid(xhr)) {
         if (options.success) options.success(data);
-        if (promise) Backbone.resolveDeferred(promise, true, [data, xhr]);
+        if (deferred) deferred.resolve(data);
       } else {
         var error = new Error('Server responded with a status of ' + status);
-        error.code = status;
         if (options.error) options.error(xhr, status, error);
-        if (promise) Backbone.resolveDeferred(promise, false, [xhr]);
+        if (deferred) deferred.reject(xhr);
       }
     }
   };
 
   return function(options) {
     if (options == null) throw new Error('You must provide options');
-    if (options.method == null) options.method = 'GET';
+    if (options.type == null) options.type = 'GET';
 
     var xhr = new XMLHttpRequest();
-    var promise = Backbone.Deferred && Backbone.Deferred();
+    var deferred = Backbone.Deferred && Backbone.Deferred();
+
     if (options.credentials) options.withCredentials = true;
-    xhr.addEventListener('readystatechange', end(xhr, options, promise));
-    xhr.open(options.method, options.url, true);
+    xhr.addEventListener('readystatechange', end(xhr, options, deferred));
+    xhr.open(options.type, options.url, true);
     if (options.headers) for (var key in options.headers) {
       xhr.setRequestHeader(key, options.headers[key]);
     }
+    if (options.beforeSend) options.beforeSend(xhr);
     xhr.send(options.data);
-    return promise;
+
+    return deferred ? deferred.promise : undefined;
   };
 })();
 // Backbone.Events
@@ -417,7 +434,7 @@ var Events = Backbone.Events = {
     if (!this._events || !eventsApi(this, 'off', name, [callback, context]))
       return this;
     if (!name && !callback && !context) {
-      this._events = {};
+      delete this._events;
       return this;
     }
 
@@ -885,7 +902,7 @@ if (_.keys) {
   var modelMethods = ['keys', 'values', 'pairs', 'invert', 'pick', 'omit'];
 
   // Mix in each Underscore method as a proxy to `Model#attributes`.
-  modelMethods.forEach(function(method) {
+  modelMethods.filter(utilExists).forEach(function(method) {
     Model.prototype[method] = function() {
       var args = slice.call(arguments);
       args.unshift(this.attributes);
@@ -1254,7 +1271,7 @@ _.extend(Collection.prototype, Events, {
 
 });
 
-if (_.each) {
+if (utilExists('each')) {
   // Underscore methods that we want to implement on the Collection.
   // 90% of the core usefulness of Backbone Collections is actually implemented
   // right here:
@@ -1266,7 +1283,7 @@ if (_.each) {
     'lastIndexOf', 'isEmpty', 'chain'];
 
   // Mix in each Underscore method as a proxy to `Collection#models`.
-  methods.forEach(function(method) {
+  methods.filter(utilExists).forEach(function(method) {
     Collection.prototype[method] = function() {
       var args = slice.call(arguments);
       args.unshift(this.models);
@@ -1278,7 +1295,7 @@ if (_.each) {
   var attributeMethods = ['groupBy', 'countBy', 'sortBy'];
 
   // Use attributes instead of properties.
-  attributeMethods.forEach(function(method) {
+  attributeMethods.filter(utilExists).forEach(function(method) {
     Collection.prototype[method] = function(value, context) {
       var iterator = typeof value === 'function' ? value : function(model) {
         return model.get(value);
@@ -1613,12 +1630,8 @@ Backbone.ajax = Backbone.$ ? function() {
   return Backbone.$.ajax.apply(Backbone.$, arguments);
 } : utils.ajax;
 
-Backbone.Deferred = Backbone.$ ? function() {
+if (Backbone.$) Backbone.Deferred = function() {
   return new Backbone.$.Deferred();
-} : null;
-
-Backbone.resolveDeferred = function(deferred, isResolved, args) {
-  return null;
 };
 // Backbone.Router
 // ---------------
