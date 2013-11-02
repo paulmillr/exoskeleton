@@ -19,27 +19,34 @@ Default **and custom** builds:
 
     make # Will create exoskeleton.js
     make noutils # If you want to use Underscore and jQuery
-                # and don't want to include `Exoskeleton.utils`.
+                 # and don't want to include `Exoskeleton.utils`.
+    make min     # Minified version.
     # Custom, like this:
     cat lib/{header,events,collection,sync,history,footer}.js > exoskeleton.js
 
-## Current features
+## Features
 
-* Custom build (you can `cat` stuff now)
+* Custom builds
 * No hard dependencies on underscore or jquery
-* Query-string router
-* Speed: blazing fast when used without jQuery.
-* `View#delegateEvents` has `keepOld` option that allows to preserve old events.
-* All params are allowed for model attributes, for example `model.get('constructor')` [(jashkenas/backbone#1495)](https://github.com/jashkenas/backbone/issues/1495)
 * Support for Bower and Component(1)
 * AMD support
-* Declaratively defined view events which point to
-  non-existing handler functions are no longer tolerated / skipped.
-  Early error is thrown instead.
+* Speed: blazing fast when used without jQuery.
+
+Also:
+
+* Router with query string support
+* `View#delegateEvents` has `keepOld` option that allows to preserve old events.
+* All params are allowed for model attributes, for example `model.get('constructor')` [(jashkenas/backbone#1495)](https://github.com/jashkenas/backbone/issues/1495)
+* Ultra-fast event delegation via native `View#delegate` method.
+* Event triggering on disposed objects is [three times faster](http://jsperf.com/exoskeleton-vs-backbone-events)
+* `Backbone.Deferred` overridable method for custom promise libraries or DOM promises
 
 ## Differences
 
-- In no-underscore environment, there are no underscore-inspired
+* Declaratively defined view events which point to
+  non-existing handler functions are no longer tolerated / skipped.
+  Early error is thrown instead.
+* In no-underscore environment, there are no underscore-inspired
   Collection methods (each, pluck etc.), but there are ES5-inspired methods:
 
   `forEach, map, filter, some, every, reduce, reduceRight, indexOf, lastIndexOf`
