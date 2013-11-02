@@ -91,7 +91,6 @@ Also take a look at Exoskeleton <a href="https://github.com/paulmillr/exoskeleto
 <ul>
   <li>Router with query string support</li>
   <li><code>View#delegateEvents</code> has <code>keepOld</code> option that allows to preserve old events.</li>
-  <li>Declaratively defined view events which point to non-existing handler functions are no longer tolerated / skipped. Early error is thrown instead.</li>
   <li>All params are allowed for model attributes, for example <code>model.get('constructor')</code> <a href="https://github.com/jashkenas/backbone/issues/1495">(backbone#1495)</a></li>
   <li>Ultra-fast event delegation via native <code>View#delegate</code> method.</li>
   <li>Event triggering on disposed objects is <a href="http://jsperf.com/exoskeleton-vs-backbone-events">three times faster</a></li>
@@ -101,6 +100,7 @@ Also take a look at Exoskeleton <a href="https://github.com/paulmillr/exoskeleto
 <h2>Differences from Backbone</h2>
 
 <ul>
+  <li>Declaratively defined view events which point to non-existing handler functions are no longer tolerated / skipped. Early error is thrown instead.</li>
   <li>
   <p>In no-underscore / lodash environment, there are no underscore-inspired
   Collection methods (each, pluck etc.), but there are ES5-inspired methods:</p>
