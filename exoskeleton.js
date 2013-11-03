@@ -1,5 +1,5 @@
 /*!
- * Exoskeleton.js 0.5.0
+ * Exoskeleton.js 0.5.1
  * (c) 2013 Paul Miller <http://paulmillr.com>
  * Based on Backbone.js
  * (c) 2010-2013 Jeremy Ashkenas, DocumentCloud
@@ -369,6 +369,10 @@ utils.ajax = (function() {
     var xhr = new XMLHttpRequest();
     var deferred = Backbone.Deferred && Backbone.Deferred();
 
+    if (options.contentType) {
+      if (options.headers == null) options.headers = {};
+      options.headers['Content-Type'] = options.contentType;
+    }
     if (options.credentials) options.withCredentials = true;
     xhr.addEventListener('readystatechange', end(xhr, options, deferred));
     xhr.open(options.type, options.url, true);
@@ -434,7 +438,7 @@ var Events = Backbone.Events = {
     if (!this._events || !eventsApi(this, 'off', name, [callback, context]))
       return this;
     if (!name && !callback && !context) {
-      delete this._events;
+      this._events = undefined;
       return this;
     }
 

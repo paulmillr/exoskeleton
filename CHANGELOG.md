@@ -1,3 +1,6 @@
+# Exoskeleton 0.5.1 (3 November 2013)
+* Added support for `contentType` option in `utils.ajax`
+
 # Exoskeleton 0.5.0 (2 November 2013)
 * Fixed behaviour in node.js environment.
 * `Backbone.Deferred` now must return actual `Deferred`
