@@ -38,6 +38,7 @@ Also:
 * `View#delegateEvents` has `keepOld` option that allows to preserve old events.
 * All params are allowed for model attributes, for example `model.get('constructor')` [(jashkenas/backbone#1495)](https://github.com/jashkenas/backbone/issues/1495)
 * Ultra-fast event delegation via native `View#delegate` method.
+* Native `View#find` and `View#findAll` DOM search methods.
 * Event triggering on disposed objects is [20 times faster](http://jsperf.com/exoskeleton-events-vs-backbone-events)
 * `Backbone.Deferred` overridable method for custom promise libraries or DOM promises
 
@@ -53,4 +54,4 @@ Also:
 
   Also, no underscore-inspired Model methods at all.
 
-- emulateHTTP and emulateJSON were removed
+* emulateHTTP and emulateJSON were removed
