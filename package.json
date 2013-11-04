@@ -11,7 +11,7 @@
     "phantomjs": "~1.9.2"
   },
   "scripts": {
-    "test": "bower install && phantomjs test/vendor/runner.js test/index.html?noglobals=true"
+    "test": "make test"
   },
   "repository": {
     "type": "git",
