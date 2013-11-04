@@ -11,7 +11,6 @@ min:
 	gzip -9 < exoskeleton.min.js | wc
 
 test:
-	bower install
 	phantomjs test/vendor/runner.js test/index.html?noglobals=true
 
 .PHONY: test
