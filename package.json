@@ -7,7 +7,6 @@
     "test": "test"
   },
   "devDependencies": {
-    "bower": "~0.10",
     "phantomjs": "~1.9.2"
   },
   "scripts": {
