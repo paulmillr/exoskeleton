@@ -11,7 +11,7 @@
     "phantomjs": "~1.9.2"
   },
   "scripts": {
-    "test": "bower install && make test"
+    "test": "make test"
   },
   "repository": {
     "type": "git",
