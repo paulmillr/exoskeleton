@@ -44,6 +44,7 @@ Also:
 
 ## Differences
 
+* When jQuery is not used, you must use `event.delegateTarget` instead of `event.currentTarget` for event delegation. This is because `currentTarget` is not overridable on native non-jQuery events.
 * Declaratively defined view events which point to
   non-existing handler functions are no longer tolerated / skipped.
   Early error is thrown instead.
