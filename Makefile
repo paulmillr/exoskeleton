@@ -9,3 +9,8 @@ min:
 	wc exoskeleton.js
 	gzip -9 < exoskeleton.js | wc
 	gzip -9 < exoskeleton.min.js | wc
+
+test:
+	phantomjs test/vendor/runner.js test/index.html?noglobals=true
+
+.PHONY: test
