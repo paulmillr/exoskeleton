@@ -100,6 +100,7 @@ Also take a look at Exoskeleton <a href="https://github.com/paulmillr/exoskeleto
 <h2>Differences from Backbone</h2>
 
 <ul>
+  <li>When jQuery is not used, you must use <code>event.delegateTarget</code> instead of <code>event.currentTarget</code> for event delegation. This is because <code>currentTarget</code> is not overridable on native non-jQuery events.</li>
   <li>Declaratively defined view events which point to non-existing handler functions are no longer tolerated / skipped. Early error is thrown instead.</li>
   <li>
   <p>In no-underscore / lodash environment, there are no underscore-inspired
