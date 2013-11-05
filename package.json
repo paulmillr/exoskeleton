@@ -9,9 +9,6 @@
   "devDependencies": {
     "phantomjs": "~1.9.2"
   },
-  "scripts": {
-    "test": "make test"
-  },
   "repository": {
     "type": "git",
     "url": "git://github.com/paulmillr/exoskeleton.git"
