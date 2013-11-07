@@ -31,9 +31,11 @@
 }
 
 .nav-header {
-  background-color: rgba(188, 122, 152, 0.95);
+  background-color: #f2efdf;
   border-bottom: 0;
-  height: 40px;
+  padding: 0;
+  margin: 0;
+  height: 160px;
   color: #fff;
   font-family: 'Helvetica';
   position: relative;
@@ -469,19 +471,25 @@ footer {
   position: relative;
   padding-top: 5px;
   padding-bottom: 10px;
+  border: 1px solid #cbcbcb;
+  /*margin-bottom: 15px;*/
 }
 
 section {
   margin-top: 0;
+  width: auto;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  border-top: 0;
 }
 
 a, a:visited {
-  color: #ff0080;
+  color: #0f7d58;
 }
 
 .dl-button {
   background-color: rgba(8, 5, 7, 0.9);
-  color: #ff0080;
+  color: #0f7d58;
 }
 .dl-button.dummy {
   background-color: #00cc80;
