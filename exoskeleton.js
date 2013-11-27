@@ -7,45 +7,31 @@
  * For all details and documentation: <http://exosjs.com>
  */
 
-(function(factory) {
+(function(root, factory) {
+  // Set up Backbone appropriately for the environment.
   if (typeof define === 'function' && define.amd) {
-    define(['underscore', 'jquery'], factory);
-  } else if (typeof exports === 'object') {
+    define(['underscore', 'jquery', 'exports'], function(_, $, exports) {
+      root.Backbone = root.Exoskeleton = factory(root, exports, _, $);
+    });
+  } else if (typeof exports !== 'undefined') {
     var _, jquery;
-    try {
-      _ = require('underscore');
-    } catch(e) { }
-    try {
-      jquery = require('jquery');
-    } catch(e) { }
-
-    factory(_, jquery);
+    try { _ = require('underscore'); } catch(e) { }
+    try { jquery = require('jquery'); } catch(e) { }
+    factory(root, exports, _, $);
   } else {
-    factory(this._, this.jQuery || this.Zepto || this.ender || this.$);
+    root.Backbone = root.Exoskeleton = factory(root, {}, root._, (root.jQuery || root.Zepto || root.ender || root.$));
   }
-})(function(_, $) {
+
+})(this, function(root, Backbone, _, $) {
   'use strict';
 
   // Initial Setup
   // -------------
 
-  // Check whether we are in common.js (e.g. node.js) environment.
-  var isCommonJs = (typeof exports === 'object');
-
-  // Save a reference to the global object (`window` in the browser, `exports`
-  // on the server).
-  var root = isCommonJs ? exports : window;
-
   // Save the previous value of the `Backbone` variable, so that it can be
   // restored later on, if `noConflict` is used.
   var previousBackbone = root.Backbone;
   var previousExoskeleton = root.Exoskeleton;
-
-  // The top-level namespace. All public Backbone classes and modules will
-  // be attached to this. Exported for both the browser and the server.
-  var Backbone = isCommonJs ?
-    exports :
-    (root.Exoskeleton = root.Backbone = {});
 
   // Underscore replacement.
   var utils = Backbone.utils = _ = (_ || {});
@@ -609,7 +595,7 @@ _.extend(Model.prototype, Events, {
 
   // Return a copy of the model's `attributes` object.
   toJSON: function(options) {
-    return _.extend(Object.create(null), this.attributes);
+    return _.extend({}, this.attributes);
   },
 
   // Proxy `Backbone.sync` by default -- but override this if you need
@@ -1235,7 +1221,7 @@ _.extend(Collection.prototype, Events, {
   _reset: function() {
     this.length = 0;
     this.models = [];
-    this._byId  = {};
+    this._byId  = Object.create(null);
   },
 
   // Prepare a hash of attributes (or other model) to be added to this
@@ -1310,11 +1296,22 @@ if (utilExists('each')) {
 } else {
   ['forEach', 'map', 'filter', 'some', 'every', 'reduce', 'reduceRight',
     'indexOf', 'lastIndexOf'].forEach(function(method) {
-    var fn = Array.prototype[method];
     Collection.prototype[method] = function(arg, context) {
-      return fn.call(this.models, arg, context);
+      return this.models[method](arg, context);
     };
   });
+
+  // Exoskeleton-specific:
+  Collection.prototype.find = function(iterator, context) {
+    var result;
+    this.some(function(value, index, list) {
+      if (iterator.call(context, value, index, list)) {
+        result = value;
+        return true;
+      }
+    });
+    return result;
+  };
 
   // Underscore methods that take a property name as an argument.
   ['sortBy'].forEach(function(method) {
@@ -1395,10 +1392,11 @@ _.extend(View.prototype, Events, {
   // Remove this view by taking the element out of the DOM, and removing any
   // applicable Backbone.Events listeners.
   remove: function() {
+    var parent;
     if (Backbone.$) {
       this.$el.remove();
-    } else if (this.el.parentNode) {
-      this.el.parentNode.removeChild(this.el);
+    } else if (parent = this.el.parentNode) {
+      parent.removeChild(this.el);
     }
     this.stopListening();
     return this;
