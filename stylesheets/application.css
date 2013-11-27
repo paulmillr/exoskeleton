@@ -469,10 +469,13 @@ footer {
 
 .nav-header {
   position: relative;
-  padding-top: 5px;
   padding-bottom: 10px;
   border: 1px solid #cbcbcb;
   /*margin-bottom: 15px;*/
+}
+
+.nav-header .list-wrapper {
+  padding-top: 0;
 }
 
 section {
@@ -495,6 +498,10 @@ a, a:visited {
 .dl-button.dummy {
   background-color: #00cc80;
   color: black;
+}
+
+.logoa {
+  width: 100%;
 }
 
 @media only screen and (max-width: 750px) {
