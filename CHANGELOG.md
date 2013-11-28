@@ -1,3 +1,11 @@
+# Exoskeleton 0.6.0 (28 November 2013)
+* **Breaking:** removed `View#delegate` and `View#undelegate`.
+  These methods now reside in `utils` and can be excluded
+  in custom builds.
+* Collection model ids can now be arbitrary js props.
+  E.g. `collection.get('toString')`.
+* `Collection#find` now works in no-underscore environment.
+
 # Exoskeleton 0.5.1 (3 November 2013)
 * Added support for `contentType` option in `utils.ajax`
 

@@ -1,5 +1,5 @@
 /*!
- * Exoskeleton.js 0.5.1
+ * Exoskeleton.js 0.6.0
  * (c) 2013 Paul Miller <http://paulmillr.com>
  * Based on Backbone.js
  * (c) 2010-2013 Jeremy Ashkenas, DocumentCloud
@@ -303,6 +303,66 @@ utils.matchesSelector = (function() {
     return element[name](selector);
   };
 })();
+
+utils.delegate = function(view, eventName, selector, callback) {
+  if (typeof selector === 'function') {
+    callback = selector;
+    selector = null;
+  }
+
+  if (typeof callback !== 'function') {
+    throw new TypeError('View#delegate expects callback function');
+  }
+
+  var root = view.el;
+  var bound = callback.bind(view);
+  var handler = selector ? function(event) {
+    for (var el = event.target; el && el !== root; el = el.parentNode) {
+      if (utils.matchesSelector(el, selector)) {
+        // event.currentTarget or event.target are read-only.
+        event.delegateTarget = el;
+        return bound(event);
+      }
+    }
+  } : bound;
+
+  root.addEventListener(eventName, handler, false);
+  view._handlers.push({
+    eventName: eventName, selector: selector,
+    callback: callback, handler: handler
+  });
+  return handler;
+};
+
+utils.undelegate = function(view, eventName, selector, callback) {
+  if (typeof selector === 'function') {
+    callback = selector;
+    selector = null;
+  }
+
+  var handlers = view._handlers;
+  var removeListener = function(item) {
+    view.el.removeEventListener(item.eventName, item.handler, false);
+  };
+
+  // Remove all handlers.
+  if (!eventName && !selector && !callback) {
+    handlers.forEach(removeListener);
+    view._handlers = [];
+  } else {
+    // Remove some handlers.
+    handlers
+      .filter(function(item) {
+        return item.eventName === eventName &&
+          (callback ? item.callback === callback : true) &&
+          (selector ? item.selector === selector : true);
+      })
+      .forEach(function(item) {
+        removeListener(item);
+        handlers.splice(handlers.indexOf(item), 1);
+      });
+  }
+};
 
 // Make AJAX request to the server.
 // Usage:
@@ -1411,73 +1471,11 @@ _.extend(View.prototype, Events, {
       this.el = this.$el[0];
     } else {
       if (this.el) this.undelegateEvents();
-      var el = (typeof element === 'string') ?
+      this.el = (typeof element === 'string') ?
         document.querySelector(element) : element;
-      this.el = el;
     }
     if (delegate !== false) this.delegateEvents();
     return this;
-  },
-
-  delegate: function(eventName, selector, callback) {
-    if (typeof selector === 'function') {
-      callback = selector;
-      selector = null;
-    }
-
-    if (typeof callback !== 'function') {
-      throw new TypeError('View#delegate expects callback function');
-    }
-
-    var root = this.el;
-    var bound = callback.bind(this);
-    var handler = selector ? function(event) {
-      for (var el = event.target; el && el !== root; el = el.parentNode) {
-        if (utils.matchesSelector(el, selector)) {
-          // event.currentTarget or event.target are read-only.
-          event.delegateTarget = el;
-          return bound(event);
-        }
-      }
-    } : bound;
-
-    root.addEventListener(eventName, handler, false);
-    this._handlers.push({
-      eventName: eventName, selector: selector,
-      callback: callback, handler: handler
-    });
-    return handler;
-  },
-
-  undelegate: function(eventName, selector, callback) {
-    if (typeof selector === 'function') {
-      callback = selector;
-      selector = null;
-    }
-
-    var root = this.el;
-    var handlers = this._handlers;
-    var removeListener = function(item) {
-      root.removeEventListener(item.eventName, item.handler, false);
-    };
-
-    // Remove all handlers.
-    if (!eventName && !selector && !callback) {
-      handlers.forEach(removeListener);
-      this._handlers = [];
-    } else {
-      // Remove some handlers.
-      handlers
-        .filter(function(item) {
-          return item.eventName === eventName &&
-            (callback ? item.callback === callback : true) &&
-            (selector ? item.selector === selector : true);
-        })
-        .forEach(function(item) {
-          removeListener(item);
-          handlers.splice(handlers.indexOf(item), 1);
-        });
-    }
   },
 
   // Set callbacks, where `this.events` is a hash of
@@ -1511,7 +1509,7 @@ _.extend(View.prototype, Events, {
         method = method.bind(this);
         this.$el.on(eventName, (selector ? selector : null), method);
       } else {
-        this.delegate(eventName, selector, method);
+        utils.delegate(this, eventName, selector, method);
       }
     }
     return this;
@@ -1524,7 +1522,7 @@ _.extend(View.prototype, Events, {
     if (Backbone.$) {
       this.$el.off('.delegateEvents' + this.cid);
     } else {
-      this.undelegate();
+      utils.undelegate(this);
     }
     return this;
   },
