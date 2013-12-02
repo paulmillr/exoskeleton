@@ -28,7 +28,7 @@ Default **and custom** builds:
 
 * Custom builds
 * No hard dependencies on underscore or jquery
-* Support for Bower and Component(1)
+* Support for Bower and [Component(1)](https://github.com/component/component)
 * AMD support
 * Speed: blazing fast when used without jQuery.
 
