@@ -1,3 +1,6 @@
+# Exoskeleton 0.6.1 (9 December 2013)
+* Fixed handling of missing common.js jQuery dependency.
+
 # Exoskeleton 0.6.0 (28 November 2013)
 * **Breaking:** removed `View#delegate` and `View#undelegate`.
   These methods now reside in `utils` and can be excluded
