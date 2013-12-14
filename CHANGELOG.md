@@ -1,3 +1,6 @@
+# Exoskeleton 0.6.2 (14 December 2013)
+* Added support for `data` option in `utils.ajax`.
+
 # Exoskeleton 0.6.1 (9 December 2013)
 * Fixed handling of missing common.js jQuery dependency.
 

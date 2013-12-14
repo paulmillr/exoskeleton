@@ -1,5 +1,5 @@
 /*!
- * Exoskeleton.js 0.6.1
+ * Exoskeleton.js 0.6.2
  * (c) 2013 Paul Miller <http://paulmillr.com>
  * Based on Backbone.js
  * (c) 2010-2013 Jeremy Ashkenas, DocumentCloud
@@ -419,6 +419,25 @@ utils.ajax = (function() {
       if (options.headers == null) options.headers = {};
       options.headers['Content-Type'] = options.contentType;
     }
+
+    // Stringify GET query params.
+    if (options.type === 'GET' && typeof options.data === 'object') {
+      var query = '';
+      var stringifyKeyValuePair = function(key, value) {
+        return value == null ? '' :
+          '&' + encodeURIComponent(key) +
+          '=' + encodeURIComponent(value);
+      };
+      for (var key in options.data) {
+        query += stringifyKeyValuePair(key, options.data[key]);
+      }
+
+      if (query) {
+        var sep = (options.url.indexOf('?') === -1) ? '?' : '&';
+        options.url += sep + query.substring(1);
+      }
+    }
+
     if (options.credentials) options.withCredentials = true;
     xhr.addEventListener('readystatechange', end(xhr, options, deferred));
     xhr.open(options.type, options.url, true);
