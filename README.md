@@ -41,6 +41,7 @@ Also:
 * Native `View#find` and `View#findAll` DOM search methods.
 * Event triggering on disposed objects is [20 times faster](http://jsperf.com/exoskeleton-events-vs-backbone-events)
 * `Backbone.Deferred` overridable method for custom promise libraries or DOM promises
+* `View#useNative` property. Works great if you want to include jQuery and still use native methods for some views. Just set it to `true` in them.
 
 ## Differences
 

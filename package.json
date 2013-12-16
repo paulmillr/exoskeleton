@@ -1,6 +1,6 @@
 {
   "name": "exoskeleton",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "description": "Faster and leaner Backbone for your HTML5 apps.",
   "main": "exoskeleton.js",
   "directories": {

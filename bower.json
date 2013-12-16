@@ -1,7 +1,7 @@
 {
   "name": "exoskeleton",
   "main": "exoskeleton.js",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "homepage": "https://github.com/paulmillr/exoskeleton",
   "author": "Paul Miller (http://paulmillr.com)",
   "description": "Faster and leaner Backbone for your HTML5 apps.",

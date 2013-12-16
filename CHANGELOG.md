@@ -1,3 +1,8 @@
+# Exoskeleton 0.6.3 (16 December 2013)
+* Added `View#useNative` property. Works great
+  if you want to include jQuery and still use native methods
+  for some views. Just set it to `true` in them.
+
 # Exoskeleton 0.6.2 (14 December 2013)
 * Added support for `data` option in `utils.ajax`.
 
