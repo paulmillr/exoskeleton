@@ -2,8 +2,6 @@
 
   var sync = Backbone.sync;
   var ajax = Backbone.ajax;
-  var emulateHTTP = Backbone.emulateHTTP;
-  var emulateJSON = Backbone.emulateJSON;
 
   QUnit.testStart(function() {
     var env = this.config.current.testEnvironment;
@@ -28,8 +26,6 @@
   QUnit.testDone(function() {
     Backbone.sync = sync;
     Backbone.ajax = ajax;
-    Backbone.emulateHTTP = emulateHTTP;
-    Backbone.emulateJSON = emulateJSON;
   });
 
 })();
