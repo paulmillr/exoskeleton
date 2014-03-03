@@ -430,6 +430,7 @@ utils.ajax = (function() {
     if (options.credentials) options.withCredentials = true;
     xhr.addEventListener('readystatechange', end(xhr, options, deferred));
     xhr.open(options.type, options.url, true);
+    xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
     if (options.headers) for (var key in options.headers) {
       xhr.setRequestHeader(key, options.headers[key]);
     }
@@ -1472,6 +1473,20 @@ _.extend(View.prototype, Events, {
     this.stopListening();
     return this;
   },
+  
+  // For small amounts of DOM Elements, where a full-blown template isn't
+  // needed, use **make** to manufacture elements, one at a time.
+  //
+  //     var el = this.make('li', {'class': 'row'}, this.model.escape('title'));
+  //
+  make: function(tagName, attributes, content) {
+    var el = document.createElement(tagName);
+    for (var attr in attributes) {
+      attr in el ? el[attr] = attributes[attr] : el.setAttribute(attr, attributes[attr]);
+    }
+    if (content) el.innerHTML = content;
+    return el;
+  },
 
   // Change the view's element (`this.el` property), including event
   // re-delegation.
@@ -1544,15 +1559,12 @@ _.extend(View.prototype, Events, {
   // an element from the `id`, `className` and `tagName` properties.
   _ensureElement: function() {
     if (!this.el) {
-      var attrs = _.extend({}, _.result(this, 'attributes'));
+      var tagName = _.result(this, 'tagName')
+      var attrs   = _.extend({}, _.result(this, 'attributes'));
       if (this.id) attrs.id = _.result(this, 'id');
       if (this.className) attrs.className = _.result(this, 'className');
       if (attrs['class']) attrs.className = attrs['class'];
-      var el = document.createElement(_.result(this, 'tagName'));
-      for (var attr in attrs) {
-        attr in el ? el[attr] = attrs[attr] : el.setAttribute(attr, attrs[attr]);
-      }
-      this.setElement(el, false);
+      this.setElement(this.make(tagName, attrs), false);
     } else {
       this.setElement(_.result(this, 'el'), false);
     }
