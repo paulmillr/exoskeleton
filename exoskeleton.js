@@ -56,17 +56,6 @@
     return this;
   };
 
-  // Turn on `emulateHTTP` to support legacy HTTP servers. Setting this option
-  // will fake `"PATCH"`, `"PUT"` and `"DELETE"` requests via the `_method` parameter and
-  // set a `X-Http-Method-Override` header.
-  Backbone.emulateHTTP = false;
-
-  // Turn on `emulateJSON` to support legacy servers that can't deal with direct
-  // `application/json` requests ... will encode the body as
-  // `application/x-www-form-urlencoded` instead and will send the model in a
-  // form param named `model`.
-  Backbone.emulateJSON = false;
-
   // Helpers
   // -------
 
@@ -420,6 +409,10 @@ utils.ajax = (function() {
       options.headers['Content-Type'] = options.contentType;
     }
 
+    if (/json/i.test(options.dataType) && !/json/i.test(options.url.split(".").pop())) {
+      options.url += ".json"
+    }
+
     // Stringify GET query params.
     if (options.type === 'GET' && typeof options.data === 'object') {
       var query = '';
@@ -441,31 +434,11 @@ utils.ajax = (function() {
     if (options.credentials) options.withCredentials = true;
     xhr.addEventListener('readystatechange', end(xhr, options, deferred));
     xhr.open(options.type, options.url, true);
-
-    var allTypes = "*/".concat("*");
-    var xhrAccepts = {
-      "*": allTypes,
-      text: "text/plain",
-      html: "text/html",
-      xml: "application/xml, text/xml",
-      json: "application/json, text/javascript"
-    };
-    xhr.setRequestHeader(
-      "Accept",
-      options.dataType && xhrAccepts[options.dataType] ?
-        xhrAccepts[options.dataType] + (options.dataType !== "*" ? ", " + allTypes + "; q=0.01" : "" ) :
-        xhrAccepts["*"]
-    );
-
-    xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
     if (options.headers) for (var key in options.headers) {
       xhr.setRequestHeader(key, options.headers[key]);
     }
-    
     if (options.beforeSend) options.beforeSend(xhr);
     xhr.send(options.data);
-    
-    console.log(xhr)
 
     return deferred ? deferred.promise : undefined;
   };
@@ -1579,7 +1552,10 @@ _.extend(View.prototype, Events, {
       if (this.id) attrs.id = _.result(this, 'id');
       if (this.className) attrs.className = _.result(this, 'className');
       if (attrs['class']) attrs.className = attrs['class'];
-      var el = _.extend(document.createElement(_.result(this, 'tagName')), attrs);
+      var el = document.createElement(_.result(this, 'tagName'));
+      for (var attr in attrs) {
+        attr in el ? el[attr] = attrs[attr] : el.setAttribute(attr, attrs[attr]);
+      }
       this.setElement(el, false);
     } else {
       this.setElement(_.result(this, 'el'), false);
@@ -1598,21 +1574,10 @@ _.extend(View.prototype, Events, {
 // * Use `setTimeout` to batch rapid-fire updates into a single request.
 // * Send up the models as XML instead of JSON.
 // * Persist models via WebSockets instead of Ajax.
-//
-// Turn on `Backbone.emulateHTTP` in order to send `PUT` and `DELETE` requests
-// as `POST`, with a `_method` parameter containing the true HTTP method,
-// as well as all requests with the body as `application/x-www-form-urlencoded`
-// instead of `application/json` with the model in a param named `model`.
-// Useful when interfacing with server-side languages like **PHP** that make
-// it difficult to read the body of `PUT` requests.
 Backbone.sync = function(method, model, options) {
-  var type = methodMap[method];
+  options || (options = {})
 
-  // Default options, unless specified.
-  _.defaults(options || (options = {}), {
-    emulateHTTP: Backbone.emulateHTTP,
-    emulateJSON: Backbone.emulateJSON
-  });
+  var type = methodMap[method];
 
   // Default JSON-request options.
   var params = {type: type, dataType: 'json'};
@@ -1628,26 +1593,8 @@ Backbone.sync = function(method, model, options) {
     params.data = JSON.stringify(options.attrs || model.toJSON(options));
   }
 
-  // For older servers, emulate JSON by encoding the request into an HTML-form.
-  if (options.emulateJSON) {
-    params.contentType = 'application/x-www-form-urlencoded';
-    params.data = params.data ? {model: params.data} : {};
-  }
-
-  // For older servers, emulate HTTP by mimicking the HTTP method with `_method`
-  // And an `X-HTTP-Method-Override` header.
-  if (options.emulateHTTP && (type === 'PUT' || type === 'DELETE' || type === 'PATCH')) {
-    params.type = 'POST';
-    if (options.emulateJSON) params.data._method = type;
-    var beforeSend = options.beforeSend;
-    options.beforeSend = function(xhr) {
-      xhr.setRequestHeader('X-HTTP-Method-Override', type);
-      if (beforeSend) return beforeSend.apply(this, arguments);
-    };
-  }
-
   // Don't process data on a non-GET request.
-  if (params.type !== 'GET' && !options.emulateJSON) {
+  if (params.type !== 'GET') {
     params.processData = false;
   }
 
