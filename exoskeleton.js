@@ -430,6 +430,23 @@ utils.ajax = (function() {
     if (options.credentials) options.withCredentials = true;
     xhr.addEventListener('readystatechange', end(xhr, options, deferred));
     xhr.open(options.type, options.url, true);
+
+    var allTypes = "*/".concat("*");
+    var xhrAccepts = {
+      "*": allTypes,
+      text: "text/plain",
+      html: "text/html",
+      xml: "application/xml, text/xml",
+      json: "application/json, text/javascript"
+    };
+    xhr.setRequestHeader(
+      "Accept",
+      options.dataType && xhrAccepts[options.dataType] ?
+        xhrAccepts[options.dataType] + (options.dataType !== "*" ? ", " + allTypes + "; q=0.01" : "" ) :
+        xhrAccepts["*"]
+    );
+
+    xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
     if (options.headers) for (var key in options.headers) {
       xhr.setRequestHeader(key, options.headers[key]);
     }
