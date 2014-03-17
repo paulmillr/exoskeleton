@@ -1680,7 +1680,7 @@ _.extend(Router.prototype, Events, {
     if (!callback) callback = this[name];
     var router = this;
     Backbone.history.route(route, function(fragment) {
-      var args = router._extractParameters(route, fragment);
+      var args = router._extractParameters(route, fragment).filter(function(v) { return v !== null });
       callback && callback.apply(router, args);
       router.trigger.apply(router, ['route:' + name].concat(args));
       router.trigger('route', name, args);
@@ -1713,10 +1713,11 @@ _.extend(Router.prototype, Events, {
     route = route.replace(escapeRegExp, '\\$&')
                  .replace(optionalParam, '(?:$1)?')
                  .replace(namedParam, function(match, optional) {
-                   return optional ? match : '([^\/]+)';
+                   return optional ? match : '([^/?]+)';
                  })
-                 .replace(splatParam, '(.*?)');
-    return new RegExp('^' + route + '$');
+                 .replace(splatParam, '([^?]*?)');
+
+    return new RegExp('^' + route + '(?:\\?([\\s\\S]*))?$');
   },
 
   // Given a route, and a URL fragment that it matches, return the array of
