@@ -734,7 +734,7 @@
   });
 
 
-  test('get URL Parameters', 3, function () {
+  test('get URL Parameters', 2, function () {
     Backbone.history.stop();
     Backbone.history = _.extend(new Backbone.History, {
       location: location,
@@ -748,8 +748,7 @@
     var Router = Backbone.Router.extend({
       routes: {
         'path': function(params) {
-          strictEqual(params, "a=1&b=2")
-          ok(true);
+          strictEqual(params, "a=1&b=2");
          }
       }
     });
