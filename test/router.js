@@ -733,6 +733,32 @@
     Backbone.history.navigate('path?query#hash', true);
   });
 
+
+  test('get URL Parameters', 2, function () {
+    Backbone.history.stop();
+    Backbone.history = _.extend(new Backbone.History, {
+      location: location,
+      history: {
+        pushState: function(state, title, url) {
+          strictEqual(url, '/path?a=1&b=2');
+        }
+      }
+    });
+
+    var Router = Backbone.Router.extend({
+      routes: {
+        'path': function(params) {
+          strictEqual(params, "a=1&b=2");
+         }
+      }
+    });
+    var router = new Router;
+
+    location.replace('http://example.com/');
+    Backbone.history.start({pushState: true});
+    Backbone.history.navigate('path?a=1&b=2', true);
+  });
+
   // Exoskeleton-SPECIFIC
   test('History allows querystring params with pushState', 1, function() {
     Backbone.history.stop();
@@ -754,5 +780,6 @@
     Backbone.history.navigate('path?foo=bar');
     equal(Backbone.history.location.hash, '#path?foo=bar');
   });
+
 
 })();
