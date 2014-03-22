@@ -1935,7 +1935,7 @@ _.extend(History.prototype, Events, {
   // want global "pubsub" in a convenient place.
   _.extend(Backbone, Events);
 
-  // Create the default Backbone.history.
-  Backbone.history = new History();
+  // Create the default Backbone.history if the History module is included.
+  if (History) Backbone.history = new History();
   return Backbone;
 });
