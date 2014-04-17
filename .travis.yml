@@ -7,9 +7,14 @@ git:
 branches:
   only:
     - master
+env:
+  global:
+  - secure: UqqgIm+c/2Btg0sQaX0yHsR5QhSOQa/CqV6AbznLKPfan6WQJEQWhxp371Zxie0D9o8g3TCjG71O3p8fk0acaJ2T7vAA4cGz54DsNT2SCNEzCBBGnPQX/vri623r7gv2FXJLAll548v+jLY206bx/WIKEMWTgaI8aX4oluca4zY=
+  - secure: WKtGKEZlayIKZWucpsJ8zt+3ptkPO/2vld4As6ThrwVxvAu+4MP32dVJQOpPBDrPazWmy3SDdUJQ0LkqIoGK5G1Pu3ovTnriHwoH+JrY8YsrsOh0Z0XlPf1InnsYrUPfAOnPpxTotstY4xSXqX7qNXnjuo9I2IcmExAPpTgKrAA=
 script: make test
 before_script:
   - npm install -g bower
   - bower install
+  - curl https://gist.github.com/santiycr/5139565/raw/sauce_connect_setup.sh | bash
 notifications:
   email: false
