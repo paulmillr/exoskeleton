@@ -5,10 +5,10 @@
   var lastRoute = null;
   var lastArgs = [];
 
-  function onRoute(router, route, args) {
+  var onRoute = function(router, route, args) {
     lastRoute = route;
     lastArgs = args;
-  }
+  };
 
   var Location = function(href) {
     this.replace(href);
@@ -16,10 +16,11 @@
 
   _.extend(Location.prototype, {
 
+    parser: document.createElement('a'),
+
     replace: function(href) {
-      var a = document.createElement('a');
-      a.href = href;
-      _.extend(this, _.pick(a,
+      this.parser.href = href;
+      _.extend(this, _.pick(this.parser,
         'href',
         'hash',
         'host',
@@ -89,7 +90,7 @@
       ":repo/compare/*from...*to":  "github",
       "decode/:named/*splat":       "decode",
       "*first/complex-*part/*rest": "complex",
-      ":entity?*args":              "query",
+      "query/:entity":              "query",
       "function/:value":            ExternalObject.routingFunction,
       "*anything":                  "anything"
     },
@@ -210,6 +211,11 @@
     equal(router.page, '20');
   });
 
+  test("routes via navigate with params", 1, function() {
+    Backbone.history.navigate('query/test?a=b', {trigger: true});
+    equal(router.queryArgs, 'a=b');
+  });
+
   test("routes via navigate for backwards-compatibility", 2, function() {
     Backbone.history.navigate('search/manhattan/p20', true);
     equal(router.query, 'manhattan');
@@ -287,7 +293,7 @@
   });
 
   test("routes (query)", 5, function() {
-    location.replace('http://example.com#mandel?a=b&c=d');
+    location.replace('http://example.com#query/mandel?a=b&c=d');
     Backbone.history.checkUrl();
     equal(router.entity, 'mandel');
     equal(router.queryArgs, 'a=b&c=d');
@@ -606,7 +612,7 @@
   test("#2062 - Trigger 'route' event on router instance.", 2, function() {
     router.on('route', function(name, args) {
       strictEqual(name, 'routeEvent');
-      deepEqual(args, ['x']);
+      deepEqual(args, ['x', null]);
     });
     location.replace('http://example.com#route-event/x');
     Backbone.history.checkUrl();
@@ -721,65 +727,87 @@
 
     var Router = Backbone.Router.extend({
       routes: {
-        // fixed by Exoskeleton
-        // path: function() { ok(true); }
-        'path?query': function() { ok(true); }
+        path: function() { ok(true); }
       }
     });
     var router = new Router;
 
     location.replace('http://example.com/');
-    Backbone.history.start({pushState: true});
+    Backbone.history.start({pushState: true, hashChange: false});
     Backbone.history.navigate('path?query#hash', true);
   });
 
-
-  test('get URL Parameters', 2, function () {
-    Backbone.history.stop();
-    Backbone.history = _.extend(new Backbone.History, {
-      location: location,
-      history: {
-        pushState: function(state, title, url) {
-          strictEqual(url, '/path?a=1&b=2');
-        }
-      }
-    });
-
+  test('Do not decode the search params.', function() {
     var Router = Backbone.Router.extend({
       routes: {
-        'path': function(params) {
-          strictEqual(params, "a=1&b=2");
-         }
+        path: function(params){
+          strictEqual(params, 'x=y%20z');
+        }
       }
     });
     var router = new Router;
-
-    location.replace('http://example.com/');
-    Backbone.history.start({pushState: true});
-    Backbone.history.navigate('path?a=1&b=2', true);
+    Backbone.history.navigate('path?x=y%20z', true);
   });
 
-  // Exoskeleton-SPECIFIC
-  test('History allows querystring params with pushState', 1, function() {
+  test('Navigate to a hash url.', function() {
     Backbone.history.stop();
-    location.replace('http://example.com/path');
-
-    Backbone.history = _.extend(new Backbone.History, {
-      location: location,
-      history: {
-        pushState: function(state, title, url) {
-          strictEqual(url, '/path?foo=bar');
+    Backbone.history = _.extend(new Backbone.History, {location: location});
+    Backbone.history.start({pushState: true});
+    var Router = Backbone.Router.extend({
+      routes: {
+        path: function(params) {
+          strictEqual(params, 'x=y');
         }
       }
     });
+    var router = new Router;
+    location.replace('http://example.com/path?x=y#hash');
+    Backbone.history.checkUrl();
+  });
+
+  test('#navigate to a hash url.', function() {
+    Backbone.history.stop();
+    Backbone.history = _.extend(new Backbone.History, {location: location});
     Backbone.history.start({pushState: true});
-    Backbone.history.navigate('path?foo=bar');
+    var Router = Backbone.Router.extend({
+      routes: {
+        path: function(params) {
+          strictEqual(params, 'x=y');
+        }
+      }
+    });
+    var router = new Router;
+    Backbone.history.navigate('path?x=y#hash', true);
   });
 
-  test('History allows querystring params in hash', 1, function() {
-    Backbone.history.navigate('path?foo=bar');
-    equal(Backbone.history.location.hash, '#path?foo=bar');
+  test('unicode pathname', 1, function() {
+    location.replace('http://example.com/myyjä');
+    Backbone.history.stop();
+    Backbone.history = _.extend(new Backbone.History, {location: location});
+    var Router = Backbone.Router.extend({
+      routes: {
+        myyjä: function() {
+          ok(true);
+        }
+      }
+    });
+    new Router;
+    Backbone.history.start({pushState: true});
   });
 
+  test('newline in route', 1, function() {
+    location.replace('http://example.com/stuff%0Anonsense?param=foo%0Abar');
+    Backbone.history.stop();
+    Backbone.history = _.extend(new Backbone.History, {location: location});
+    var Router = Backbone.Router.extend({
+      routes: {
+        'stuff\nnonsense': function() {
+          ok(true);
+        }
+      }
+    });
+    new Router;
+    Backbone.history.start({pushState: true});
+  });
 
 })();

@@ -755,7 +755,7 @@ _.extend(Model.prototype, Events, {
 
     // Trigger all relevant attribute changes.
     if (!silent) {
-      if (changes.length) this._pending = true;
+      if (changes.length) this._pending = options;
       for (var i = 0, l = changes.length; i < l; i++) {
         this.trigger('change:' + changes[i], this, current[changes[i]], options);
       }
@@ -766,6 +766,7 @@ _.extend(Model.prototype, Events, {
     if (changing) return this;
     if (!silent) {
       while (this._pending) {
+        options = this._pending;
         this._pending = false;
         this.trigger('change', this, options);
       }
@@ -933,9 +934,12 @@ _.extend(Model.prototype, Events, {
   // using Backbone's restful methods, override this to change the endpoint
   // that will be called.
   url: function() {
-    var base = _.result(this, 'urlRoot') || _.result(this.collection, 'url') || urlError();
+    var base =
+      _.result(this, 'urlRoot') ||
+      _.result(this.collection, 'url') ||
+      urlError();
     if (this.isNew()) return base;
-    return base + (base.charAt(base.length - 1) === '/' ? '' : '/') + encodeURIComponent(this.id);
+    return base.replace(/([^\/])$/, '$1/') + encodeURIComponent(this.id);
   },
 
   // **parse** converts a response into the hash of attributes to be `set` on
@@ -951,7 +955,7 @@ _.extend(Model.prototype, Events, {
 
   // A model is new if it has never been saved to the server, and lacks an id.
   isNew: function() {
-    return this.id == null;
+    return !this.has(this.idAttribute);
   },
 
   // Check if the model is currently in a valid state.
@@ -1056,7 +1060,7 @@ _.extend(Collection.prototype, Events, {
         options.index = index;
         model.trigger('remove', model, this, options);
       }
-      this._removeReference(model);
+      this._removeReference(model, options);
     }
     return singular ? models[0] : models;
   },
@@ -1082,11 +1086,11 @@ _.extend(Collection.prototype, Events, {
     // Turn bare objects into model references, and prevent invalid models
     // from being added.
     for (i = 0, l = models.length; i < l; i++) {
-      attrs = models[i];
+      attrs = models[i] || {};
       if (attrs instanceof Model) {
         id = model = attrs;
       } else {
-        id = attrs[targetModel.prototype.idAttribute];
+        id = attrs[targetModel.prototype.idAttribute || 'id'];
       }
 
       // If a duplicate is found, prevent it from being added and
@@ -1106,14 +1110,13 @@ _.extend(Collection.prototype, Events, {
         model = models[i] = this._prepareModel(attrs, options);
         if (!model) continue;
         toAdd.push(model);
-
-        // Listen to added models' events, and index models for lookup by
-        // `id` and by `cid`.
-        model.on('all', this._onModelEvent, this);
-        this._byId[model.cid] = model;
-        if (model.id != null) this._byId[model.id] = model;
+        this._addReference(model, options);
       }
-      if (order) order.push(existing || model);
+
+      // Do not add multiple models with the same `id`.
+      model = existing || model;
+      if (order && (model.isNew() || !modelMap[model.id])) order.push(model);
+      modelMap[model.id] = true;
     }
 
     // Remove nonexistent models if appropriate.
@@ -1163,7 +1166,7 @@ _.extend(Collection.prototype, Events, {
   reset: function(models, options) {
     options || (options = {});
     for (var i = 0, l = this.models.length; i < l; i++) {
-      this._removeReference(this.models[i]);
+      this._removeReference(this.models[i], options);
     }
     options.previousModels = this.models;
     this._reset();
@@ -1204,7 +1207,7 @@ _.extend(Collection.prototype, Events, {
   // Get a model from the set by id.
   get: function(obj) {
     if (obj == null) return void 0;
-    return this._byId[obj.id] || this._byId[obj.cid] || this._byId[obj];
+    return this._byId[obj] || this._byId[obj.id] || this._byId[obj.cid];
   },
 
   // Get the model at the given index.
@@ -1282,7 +1285,7 @@ _.extend(Collection.prototype, Events, {
     if (!options.wait) this.add(model, options);
     var collection = this;
     var success = options.success;
-    options.success = function(model, resp, options) {
+    options.success = function(model, resp) {
       if (options.wait) collection.add(model, options);
       if (success) success(model, resp, options);
     };
@@ -1306,17 +1309,14 @@ _.extend(Collection.prototype, Events, {
   _reset: function() {
     this.length = 0;
     this.models = [];
-    this._byId  = Object.create(null);
+    this._byId  = {};
   },
 
   // Prepare a hash of attributes (or other model) to be added to this
   // collection.
   _prepareModel: function(attrs, options) {
-    if (attrs instanceof Collection.prototype.model) {
-      if (!attrs.collection) attrs.collection = this;
-      return attrs;
-    }
-    options = options ? _.extend({}, options) : {};
+    if (attrs instanceof Model) return attrs;
+    options = _.extend({}, options);
     options.collection = this;
     var model = new this.model(attrs, options);
     if (!model.validationError) return model;
@@ -1324,8 +1324,16 @@ _.extend(Collection.prototype, Events, {
     return false;
   },
 
+  // Internal method to create a model's ties to a collection.
+  _addReference: function(model, options) {
+    this._byId[model.cid] = model;
+    if (model.id != null) this._byId[model.id] = model;
+    if (!model.collection) model.collection = this;
+    model.on('all', this._onModelEvent, this);
+  },
+
   // Internal method to sever a model's ties to a collection.
-  _removeReference: function(model) {
+  _removeReference: function(model, options) {
     if (this === model.collection) delete model.collection;
     model.off('all', this._onModelEvent, this);
   },
@@ -1632,9 +1640,24 @@ Backbone.ajax = Backbone.$ ? function() {
   return Backbone.$.ajax.apply(Backbone.$, arguments);
 } : utils.ajax;
 
-if (Backbone.$) Backbone.Deferred = function() {
-  return new Backbone.$.Deferred();
-};
+if (Backbone.$) {
+  Backbone.Deferred = function() {
+    return new Backbone.$.Deferred();
+  };
+} else if (typeof Promise !== 'undefined' && typeof Promise.all === 'function') {
+  Backbone.Deferred = function() {
+    var promiseResolve, promiseReject;
+    var promise = new Promise(function(resolve, reject) {
+      promiseResolve = resolve;
+      promiseReject = reject;
+    });
+    return {
+      promise: promise,
+      resolve: promiseResolve,
+      reject: promiseReject
+    };
+  };
+}
 // Backbone.Router
 // ---------------
 
@@ -1680,13 +1703,19 @@ _.extend(Router.prototype, Events, {
     if (!callback) callback = this[name];
     var router = this;
     Backbone.history.route(route, function(fragment) {
-      var args = router._extractParameters(route, fragment).filter(function(v) { return v !== null });
-      callback && callback.apply(router, args);
+      var args = router._extractParameters(route, fragment);
+      router.execute(callback, args);
       router.trigger.apply(router, ['route:' + name].concat(args));
       router.trigger('route', name, args);
       Backbone.history.trigger('route', router, name, args);
     });
     return this;
+  },
+
+  // Execute a route handler with the provided parameters.  This is an
+  // excellent place to do pre-route setup or post-route cleanup.
+  execute: function(callback, args) {
+    if (callback) callback.apply(this, args);
   },
 
   // Simple proxy to `Backbone.history` to save a fragment into the history.
@@ -1716,7 +1745,6 @@ _.extend(Router.prototype, Events, {
                    return optional ? match : '([^/?]+)';
                  })
                  .replace(splatParam, '([^?]*?)');
-
     return new RegExp('^' + route + '(?:\\?([\\s\\S]*))?$');
   },
 
@@ -1725,7 +1753,9 @@ _.extend(Router.prototype, Events, {
   // treated as `null` to normalize cross-browser behavior.
   _extractParameters: function(route, fragment) {
     var params = route.exec(fragment).slice(1);
-    return params.map(function(param) {
+    return params.map(function(param, i) {
+      // Don't decode the search params.
+      if (i === params.length - 1) return param || null;
       return param ? decodeURIComponent(param) : null;
     });
   }
@@ -1737,7 +1767,8 @@ _.extend(Router.prototype, Events, {
 // Handles cross-browser history management, based on either
 // [pushState](http://diveintohtml5.info/history.html) and real URLs, or
 // [onhashchange](https://developer.mozilla.org/en-US/docs/DOM/window.onhashchange)
-// and URL fragments.
+// and URL fragments. If the browser supports neither (old IE, natch),
+// falls back to polling.
 var History = Backbone.History = function() {
   this.handlers = [];
   this.checkUrl = this.checkUrl.bind(this);
@@ -1767,6 +1798,15 @@ History.started = false;
 // Set up all inheritable **Backbone.History** properties and methods.
 _.extend(History.prototype, Events, {
 
+  // The default interval to poll for hash changes, if necessary, is
+  // twenty times a second.
+  interval: 50,
+
+  // Are we at the app root?
+  atRoot: function() {
+    return this.location.pathname.replace(/[^\/]$/, '$&/') === this.root;
+  },
+
   // Gets the true hash value. Cannot use location.hash directly due to bug
   // in Firefox where location.hash will always be decoded.
   getHash: function(window) {
@@ -1776,11 +1816,10 @@ _.extend(History.prototype, Events, {
 
   // Get the cross-browser normalized URL fragment, either from the URL,
   // the hash, or the override.
-  getFragment: function(fragment) {
+  getFragment: function(fragment, forcePushState) {
     if (fragment == null) {
-      if (this._wantsPushState || !this._wantsHashChange) {
-        // CHANGED: Make fragment include query string.
-        fragment = this.location.pathname + this.location.search;
+      if (this._hasPushState || !this._wantsHashChange || forcePushState) {
+        fragment = decodeURI(this.location.pathname + this.location.search);
         var root = this.root.replace(trailingSlash, '');
         if (!fragment.indexOf(root)) fragment = fragment.slice(root.length);
       } else {
@@ -1796,12 +1835,13 @@ _.extend(History.prototype, Events, {
     if (History.started) throw new Error("Backbone.history has already been started");
     History.started = true;
 
-    // Figure out the initial configuration.
-    // Is pushState desired or should we use hashchange only?
+    // Figure out the initial configuration. Do we need an iframe?
+    // Is pushState desired ... is it available?
     this.options          = _.extend({root: '/'}, this.options, options);
     this.root             = this.options.root;
     this._wantsHashChange = this.options.hashChange !== false;
     this._wantsPushState  = !!this.options.pushState;
+    this._hasPushState    = !!(this.options.pushState && this.history && this.history.pushState);
     var fragment          = this.getFragment();
 
     // Normalize root to always include a leading and trailing slash.
@@ -1819,17 +1859,23 @@ _.extend(History.prototype, Events, {
     // opened by a non-pushState browser.
     this.fragment = fragment;
     var loc = this.location;
-    var atRoot = loc.pathname.replace(/[^\/]$/, '$&/') === this.root;
 
     // Transition from hashChange to pushState or vice versa if both are
     // requested.
     if (this._wantsHashChange && this._wantsPushState) {
-      // If we've started out with a hash-based route, but we're currently
+
+      // If we've started off with a route from a `pushState`-enabled
+      // browser, but we're currently in a browser that doesn't support it...
+      if (!this._hasPushState && !this.atRoot()) {
+        this.fragment = this.getFragment(null, true);
+        this.location.replace(this.root + '#' + this.fragment);
+        // Return immediately as browser will do redirect to new url
+        return true;
+
+      // Or if we've started out with a hash-based route, but we're currently
       // in a browser where it could be `pushState`-based instead...
-      if (atRoot && loc.hash) {
+      } else if (this._hasPushState && this.atRoot() && loc.hash) {
         this.fragment = this.getHash().replace(routeStripper, '');
-        // CHANGED: It's no longer needed to add loc.search at the end,
-        // as query params have been already included into @fragment
         this.history.replaceState({}, document.title, this.root + this.fragment);
       }
 
@@ -1886,7 +1932,7 @@ _.extend(History.prototype, Events, {
 
     var url = this.root + (fragment = this.getFragment(fragment || ''));
 
-    // Strip the fragment of the query and hash for matching.
+    // Strip the hash for matching.
     fragment = fragment.replace(pathStripper, '');
 
     if (this.fragment === fragment) return;
@@ -1923,8 +1969,7 @@ _.extend(History.prototype, Events, {
     }
   }
 
-});
-  // !!!
+});  // !!!
   // Init.
   ['Model', 'Collection', 'Router', 'View', 'History'].forEach(function(name) {
     var item = Backbone[name];
