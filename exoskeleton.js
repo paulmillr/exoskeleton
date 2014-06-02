@@ -273,189 +273,6 @@ var eq = function(a, b, aStack, bStack) {
 utils.isEqual = function(a, b) {
   return eq(a, b, [], []);
 };
-// Usage:
-//   utils.matchesSelector(div, '.something');
-utils.matchesSelector = (function() {
-  if (typeof document === 'undefined') return;
-  // Suffix.
-  var sfx = 'MatchesSelector';
-  var tag = document.createElement('div');
-  var name;
-  // Detect the right suffix.
-  ['matches', 'webkit' + sfx, 'moz' + sfx, 'ms' + sfx].some(function(item) {
-    var valid = (item in tag);
-    name = item;
-    return valid;
-  });
-  if (!name) throw new Error('Element#matches is not supported');
-  return function(element, selector) {
-    return element[name](selector);
-  };
-})();
-
-utils.delegate = function(view, eventName, selector, callback) {
-  if (typeof selector === 'function') {
-    callback = selector;
-    selector = null;
-  }
-
-  if (typeof callback !== 'function') {
-    throw new TypeError('View#delegate expects callback function');
-  }
-
-  var root = view.el;
-  var bound = callback.bind(view);
-  var handler = selector ? function(event) {
-    for (var el = event.target; el && el !== root; el = el.parentNode) {
-      if (utils.matchesSelector(el, selector)) {
-        // event.currentTarget or event.target are read-only.
-        event.delegateTarget = el;
-        return bound(event);
-      }
-    }
-  } : bound;
-
-  root.addEventListener(eventName, handler, false);
-  view._handlers.push({
-    eventName: eventName, selector: selector,
-    callback: callback, handler: handler
-  });
-  return handler;
-};
-
-utils.undelegate = function(view, eventName, selector, callback) {
-  if (typeof selector === 'function') {
-    callback = selector;
-    selector = null;
-  }
-
-  var handlers = view._handlers;
-  var removeListener = function(item) {
-    view.el.removeEventListener(item.eventName, item.handler, false);
-  };
-
-  // Remove all handlers.
-  if (!eventName && !selector && !callback) {
-    handlers.forEach(removeListener);
-    view._handlers = [];
-  } else {
-    // Remove some handlers.
-    handlers
-      .filter(function(item) {
-        return item.eventName === eventName &&
-          (callback ? item.callback === callback : true) &&
-          (selector ? item.selector === selector : true);
-      })
-      .forEach(function(item) {
-        removeListener(item);
-        handlers.splice(handlers.indexOf(item), 1);
-      });
-  }
-};
-
-// Make AJAX request to the server.
-// Usage:
-//   var callback = function(error, data) {console.log('Done.', error, data);};
-//   ajax({url: 'url', type: 'PATCH', data: 'data'}, callback);
-utils.ajax = (function() {
-  var xmlRe = /^(?:application|text)\/xml/;
-  var jsonRe = /^application\/json/;
-
-  var getData = function(accepts, xhr) {
-    if (accepts == null) accepts = xhr.getResponseHeader('content-type');
-    if (xmlRe.test(accepts)) {
-      return xhr.responseXML;
-    } else if (jsonRe.test(accepts)) {
-      return JSON.parse(xhr.responseText);
-    } else {
-      return xhr.responseText;
-    }
-  };
-
-  var isValid = function(xhr) {
-    return (xhr.status >= 200 && xhr.status < 300) ||
-      (xhr.status === 304) ||
-      (xhr.status === 0 && window.location.protocol === 'file:')
-  };
-
-  var end = function(xhr, options, deferred) {
-    return function() {
-      if (xhr.readyState !== 4) return;
-
-      var status = xhr.status;
-      var data = getData(options.headers && options.headers.Accept, xhr);
-
-      // Check for validity.
-      if (isValid(xhr)) {
-        if (options.success) options.success(data);
-        if (deferred) deferred.resolve(data);
-      } else {
-        var error = new Error('Server responded with a status of ' + status);
-        if (options.error) options.error(xhr, status, error);
-        if (deferred) deferred.reject(xhr);
-      }
-    }
-  };
-
-  return function(options) {
-    if (options == null) throw new Error('You must provide options');
-    if (options.type == null) options.type = 'GET';
-
-    var xhr = new XMLHttpRequest();
-    var deferred = Backbone.Deferred && Backbone.Deferred();
-
-    if (options.contentType) {
-      if (options.headers == null) options.headers = {};
-      options.headers['Content-Type'] = options.contentType;
-    }
-
-    // Stringify GET query params.
-    if (options.type === 'GET' && typeof options.data === 'object') {
-      var query = '';
-      var stringifyKeyValuePair = function(key, value) {
-        return value == null ? '' :
-          '&' + encodeURIComponent(key) +
-          '=' + encodeURIComponent(value);
-      };
-      for (var key in options.data) {
-        query += stringifyKeyValuePair(key, options.data[key]);
-      }
-
-      if (query) {
-        var sep = (options.url.indexOf('?') === -1) ? '?' : '&';
-        options.url += sep + query.substring(1);
-      }
-    }
-
-    if (options.credentials) options.withCredentials = true;
-    xhr.addEventListener('readystatechange', end(xhr, options, deferred));
-    xhr.open(options.type, options.url, true);
-
-    var allTypes = "*/".concat("*");
-    var xhrAccepts = {
-      "*": allTypes,
-      text: "text/plain",
-      html: "text/html",
-      xml: "application/xml, text/xml",
-      json: "application/json, text/javascript"
-    };
-    xhr.setRequestHeader(
-      "Accept",
-      options.dataType && xhrAccepts[options.dataType] ?
-        xhrAccepts[options.dataType] + (options.dataType !== "*" ? ", " + allTypes + "; q=0.01" : "" ) :
-        xhrAccepts["*"]
-    );
-
-    xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-    if (options.headers) for (var key in options.headers) {
-      xhr.setRequestHeader(key, options.headers[key]);
-    }
-    if (options.beforeSend) options.beforeSend(xhr);
-    xhr.send(options.data);
-
-    return deferred ? deferred.promise : undefined;
-  };
-})();
 // Backbone.Events
 // ---------------
 
@@ -1427,9 +1244,18 @@ if (utilExists('each')) {
 // having to worry about render order ... and makes it easy for the view to
 // react to specific changes in the state of your models.
 
-// Options with special meaning *(e.g. model, collection, id, className)* are
-// attached directly to the view.  See `viewOptions` for an exhaustive
-// list.
+// Creating a Backbone.View creates its initial element outside of the DOM,
+// if an existing element is not provided...
+var View = Backbone.View = function(options) {
+  this.cid = _.uniqueId('view');
+
+  if (options) Object.keys(options).forEach(function(key) {
+    if (viewOptions.indexOf(key) !== -1) this[key] = options[key];
+  }, this);
+
+  this._ensureElement();
+  this.initialize.apply(this, arguments);
+};
 
 // Cached regex to split keys for `delegate`.
 var delegateEventSplitter = /^(\S+)\s*(.*)$/;
@@ -1437,24 +1263,8 @@ var delegateEventSplitter = /^(\S+)\s*(.*)$/;
 // List of view options to be merged as properties.
 var viewOptions = ['model', 'collection', 'el', 'id', 'attributes', 'className', 'tagName', 'events'];
 
-// Creating a Backbone.View creates its initial element outside of the DOM,
-// if an existing element is not provided...
-var View = Backbone.View = function(options) {
-  this.cid = _.uniqueId('view');
-  if (options) Object.keys(options).forEach(function(key) {
-    if (viewOptions.indexOf(key) !== -1) this[key] = options[key];
-  }, this);
-  this._handlers = [];
-  this._ensureElement();
-  this.initialize.apply(this, arguments);
-  this.delegateEvents();
-};
-
 // Set up all inheritable **Backbone.View** properties and methods.
 _.extend(View.prototype, Events, {
-  // In case you want to include jQuery with your app
-  // for *some* views and use native methods for other views.
-  useNative: false,
 
   // The default `tagName` of a View's element is `"div"`.
   tagName: 'div',
@@ -1462,16 +1272,7 @@ _.extend(View.prototype, Events, {
   // jQuery delegate for element lookup, scoped to DOM elements within the
   // current view. This should be preferred to global lookups where possible.
   $: function(selector) {
-    return Backbone.$ && !this.useNative ? this.$el.find(selector) : this.findAll(selector);
-  },
-
-  // Exoskeleton-related DOM methods.
-  find: function(selector) {
-    return this.el.querySelector(selector);
-  },
-
-  findAll: function(selector) {
-    return slice.call(this.el.querySelectorAll(selector));
+    return this.$el.find(selector);
   },
 
   // Initialize is an empty function by default. Override it with your own
@@ -1488,30 +1289,35 @@ _.extend(View.prototype, Events, {
   // Remove this view by taking the element out of the DOM, and removing any
   // applicable Backbone.Events listeners.
   remove: function() {
-    var parent;
-    if (Backbone.$ && !this.useNative) {
-      this.$el.remove();
-    } else if (parent = this.el.parentNode) {
-      parent.removeChild(this.el);
-    }
+    this._removeElement();
     this.stopListening();
     return this;
   },
 
-  // Change the view's element (`this.el` property), including event
-  // re-delegation.
-  setElement: function(element, delegate) {
-    if (Backbone.$ && !this.useNative) {
-      if (this.$el) this.undelegateEvents();
-      this.$el = element instanceof Backbone.$ ? element : Backbone.$(element);
-      this.el = this.$el[0];
-    } else {
-      if (this.el) this.undelegateEvents();
-      this.el = (typeof element === 'string') ?
-        document.querySelector(element) : element;
-    }
-    if (delegate !== false) this.delegateEvents();
+  // Remove this view's element from the document and all event listeners
+  // attached to it. Exposed for subclasses using an alternative DOM
+  // manipulation API.
+  _removeElement: function() {
+    this.$el.remove();
+  },
+
+  // Change the view's element (`this.el` property) and re-delegate the
+  // view's events on the new element.
+  setElement: function(element) {
+    this.undelegateEvents();
+    this._setElement(element);
+    this.delegateEvents();
     return this;
+  },
+
+  // Creates the `this.el` and `this.$el` references for this view using the
+  // given `el` and a hash of `attributes`. `el` can be a CSS selector or an
+  // HTML string, a jQuery context or an element. Subclasses can override
+  // this to utilize an alternative DOM manipulation API and are only required
+  // to set the `this.el` property.
+  _setElement: function(el) {
+    this.$el = el instanceof Backbone.$ ? el : Backbone.$(el);
+    this.el = this.$el[0];
   },
 
   // Set callbacks, where `this.events` is a hash of
@@ -1527,40 +1333,44 @@ _.extend(View.prototype, Events, {
   // pairs. Callbacks will be bound to the view, with `this` set properly.
   // Uses event delegation for efficiency.
   // Omitting the selector binds the event to `this.el`.
-  // This only works for delegate-able events: not `focus`, `blur`, and
-  // not `change`, `submit`, and `reset` in Internet Explorer.
-  delegateEvents: function(events, keepOld) {
+  delegateEvents: function(events) {
     if (!(events || (events = _.result(this, 'events')))) return this;
-    if (!keepOld) this.undelegateEvents();
+    this.undelegateEvents();
     for (var key in events) {
       var method = events[key];
       if (typeof method !== 'function') method = this[events[key]];
       // if (!method) continue;
-
       var match = key.match(delegateEventSplitter);
-      var eventName = match[1], selector = match[2];
-
-      if (Backbone.$ && !this.useNative) {
-        eventName += '.delegateEvents' + this.cid;
-        method = method.bind(this);
-        this.$el.on(eventName, (selector ? selector : null), method);
-      } else {
-        utils.delegate(this, eventName, selector, method);
-      }
+      this.delegate(match[1], match[2], method.bind(this));
     }
     return this;
   },
 
-  // Clears all callbacks previously bound to the view with `delegateEvents`.
+  // Add a single event listener to the view's element (or a child element
+  // using `selector`). This only works for delegate-able events: not `focus`,
+  // `blur`, and not `change`, `submit`, and `reset` in Internet Explorer.
+  delegate: function(eventName, selector, listener) {
+    this.$el.on(eventName + '.delegateEvents' + this.cid, selector, listener);
+  },
+
+  // Clears all callbacks previously bound to the view by `delegateEvents`.
   // You usually don't need to use this, but may wish to if you have multiple
   // Backbone views attached to the same DOM element.
   undelegateEvents: function() {
-    if (Backbone.$ && !this.useNative) {
-      this.$el.off('.delegateEvents' + this.cid);
-    } else {
-      utils.undelegate(this);
-    }
+    if (this.$el) this.$el.off('.delegateEvents' + this.cid);
     return this;
+  },
+
+  // A finer-grained `undelegateEvents` for removing a single delegated event.
+  // `selector` and `listener` are both optional.
+  undelegate: function(eventName, selector, listener) {
+    this.$el.off(eventName + '.delegateEvents' + this.cid, selector, listener);
+  },
+
+  // Produces a DOM element to be assigned to your view. Exposed for
+  // subclasses using an alternative DOM manipulation API.
+  _createElement: function(tagName) {
+    return document.createElement(tagName);
   },
 
   // Ensure that the View has a DOM element to render into.
@@ -1571,16 +1381,18 @@ _.extend(View.prototype, Events, {
     if (!this.el) {
       var attrs = _.extend({}, _.result(this, 'attributes'));
       if (this.id) attrs.id = _.result(this, 'id');
-      if (this.className) attrs.className = _.result(this, 'className');
-      if (attrs['class']) attrs.className = attrs['class'];
-      var el = document.createElement(_.result(this, 'tagName'));
-      for (var attr in attrs) {
-        attr in el ? el[attr] = attrs[attr] : el.setAttribute(attr, attrs[attr]);
-      }
-      this.setElement(el, false);
+      if (this.className) attrs['class'] = _.result(this, 'className');
+      this.setElement(this._createElement(_.result(this, 'tagName')));
+      this._setAttributes(attrs);
     } else {
-      this.setElement(_.result(this, 'el'), false);
+      this.setElement(_.result(this, 'el'));
     }
+  },
+
+  // Set attributes from a hash on this view's element.  Exposed for
+  // subclasses using an alternative DOM manipulation API.
+  _setAttributes: function(attributes) {
+    this.$el.attr(attributes);
   }
 
 });
@@ -1636,28 +1448,9 @@ var methodMap = {
 
 // Set the default implementation of `Backbone.ajax` to proxy through to `$`.
 // Override this if you'd like to use a different library.
-Backbone.ajax = Backbone.$ ? function() {
+Backbone.ajax = function() {
   return Backbone.$.ajax.apply(Backbone.$, arguments);
-} : utils.ajax;
-
-if (Backbone.$) {
-  Backbone.Deferred = function() {
-    return new Backbone.$.Deferred();
-  };
-} else if (typeof Promise !== 'undefined' && typeof Promise.all === 'function') {
-  Backbone.Deferred = function() {
-    var promiseResolve, promiseReject;
-    var promise = new Promise(function(resolve, reject) {
-      promiseResolve = resolve;
-      promiseReject = reject;
-    });
-    return {
-      promise: promise,
-      resolve: promiseResolve,
-      reject: promiseReject
-    };
-  };
-}
+};
 // Backbone.Router
 // ---------------
 
