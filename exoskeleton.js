@@ -69,7 +69,7 @@
     // The constructor function for the new subclass is either defined by you
     // (the "constructor" property in your `extend` definition), or defaulted
     // by us to simply call the parent's constructor.
-    if (protoProps && hasOwnProperty.call(protoProps, 'constructor')) {
+    if (protoProps && _.has(protoProps, 'constructor')) {
       child = protoProps.constructor;
     } else {
       child = function(){ return parent.apply(this, arguments); };
@@ -179,6 +179,10 @@ utils.uniqueId = function uniqueId(prefix) {
   return prefix ? prefix + id : id;
 };
 
+utils.has = function(obj, key) {
+  return Object.hasOwnProperty.call(obj, key);
+};
+
 var eq = function(a, b, aStack, bStack) {
   // Identical objects are equal. `0 === -0`, but they aren't identical.
   // See the [Harmony `egal` proposal](http://wiki.ecmascript.org/doku.php?id=harmony:egal).
@@ -248,17 +252,17 @@ var eq = function(a, b, aStack, bStack) {
   } else {
     // Deep compare objects.
     for (var key in a) {
-      if (hasOwnProperty.call(a, key)) {
+      if (_.has(a, key)) {
         // Count the expected number of properties.
         size++;
         // Deep compare each member.
-        if (!(result = hasOwnProperty.call(b, key) && eq(a[key], b[key], aStack, bStack))) break;
+        if (!(result = _.has(b, key) && eq(a[key], b[key], aStack, bStack))) break;
       }
     }
     // Ensure that both objects contain the same number of properties.
     if (result) {
       for (key in b) {
-        if (hasOwnProperty.call(b, key) && !(size--)) break;
+        if (_.has(b, key) && !(size--)) break;
       }
       result = !size;
     }
@@ -610,7 +614,7 @@ _.extend(Model.prototype, Events, {
   // If you specify an attribute name, determine if that attribute has changed.
   hasChanged: function(attr) {
     if (attr == null) return !!Object.keys(this.changed).length;
-    return hasOwnProperty.call(this.changed, attr);
+    return _.has(this.changed, attr);
   },
 
   // Return an object containing all the attributes that have changed, or
