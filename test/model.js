@@ -1152,4 +1152,11 @@
     });
   });
 
+  test("toJSON result has prototype methods", 1, function() {
+    var model = new Backbone.Model(),
+        json = model.toJSON();
+
+    ok(typeof json.hasOwnProperty === 'function');
+  });
+
 })();
