@@ -1,11 +1,11 @@
 # Exoskeleton 0.7.0 (4 August 2014)
 * Breaking: Align Exoskeleton with latest Backbone (specifically
   jashkenas/backbone#3003).
-  ** Remove View#find, View#findAll, and View#useNative
-  ** Remove utils.matchesSelector, utils.delegate, and utils.delegate
-  ** Remove `keepOld` property from `delegateEvents`. Use `delegate` to add
-     individual events now.
-  ** All hooks from jashkenas/backbone#3003. [Instructions here](https://github.com/jashkenas/backbone/wiki/Using-Backbone-without-jQuery).
+  * Remove View#find, View#findAll, and View#useNative
+  * Remove utils.matchesSelector, utils.delegate, and utils.delegate
+  * Remove `keepOld` property from `delegateEvents`. Use `delegate` to add
+    individual events now.
+  * All hooks from jashkenas/backbone#3003. [Instructions here](https://github.com/jashkenas/backbone/wiki/Using-Backbone-without-jQuery).
 * Add Router#execute and Router#atRoot
 * Add Collection#_addReference
 * Add _.has to utils
