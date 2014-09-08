@@ -295,8 +295,7 @@ var Events = Backbone.Events = {
   // Bind an event to a `callback` function. Passing `"all"` will bind
   // the callback to all events fired.
   on: function(name, callback, context) {
-    if (!eventsApi(this, 'on', name, [callback, context]) || !callback)
-      return this;
+    if (!eventsApi(this, 'on', name, [callback, context]) || !callback) return this;
     this._events || (this._events = {});
     var events = this._events[name] || (this._events[name] = []);
     events.push({callback: callback, context: context, ctx: context || this});
@@ -306,11 +305,9 @@ var Events = Backbone.Events = {
   // Bind an event to only be triggered a single time. After the first time
   // the callback is invoked, it will be removed.
   once: function(name, callback, context) {
-    if (!eventsApi(this, 'once', name, [callback, context]) || !callback)
-      return this;
+    if (!eventsApi(this, 'once', name, [callback, context]) || !callback) return this;
     var self = this;
     var ran;
-
     var once = function() {
       if (ran) return;
       ran = true;
@@ -327,13 +324,11 @@ var Events = Backbone.Events = {
   // callbacks for all events.
   off: function(name, callback, context) {
     var retain, ev, events, names, i, l, j, k;
-    if (!this._events || !eventsApi(this, 'off', name, [callback, context]))
-      return this;
+    if (!this._events || !eventsApi(this, 'off', name, [callback, context])) return this;
     if (!name && !callback && !context) {
-      this._events = undefined;
+      this._events = void 0;
       return this;
     }
-
     names = name ? [name] : Object.keys(this._events);
     for (i = 0, l = names.length; i < l; i++) {
       name = names[i];
@@ -342,8 +337,7 @@ var Events = Backbone.Events = {
         if (callback || context) {
           for (j = 0, k = events.length; j < k; j++) {
             ev = events[j];
-            if ((callback && callback !== ev.callback &&
-                callback !== ev.callback._callback) ||
+            if ((callback && callback !== ev.callback && callback !== ev.callback._callback) ||
                 (context && context !== ev.context)) {
               retain.push(ev);
             }
@@ -382,9 +376,7 @@ var Events = Backbone.Events = {
     for (var id in listeningTo) {
       obj = listeningTo[id];
       obj.off(name, callback, this);
-      if (remove || !Object.keys(obj._events).length) {
-        delete this._listeningTo[id];
-      }
+      if (remove || !Object.keys(obj._events).length) delete this._listeningTo[id];
     }
     return this;
   }
@@ -399,14 +391,11 @@ var eventSplitter = /\s+/;
 // in terms of the existing API.
 var eventsApi = function(obj, action, name, rest) {
   if (!name) return true;
-  var arr;
 
   // Handle event maps.
   if (typeof name === 'object') {
     for (var key in name) {
-      arr = [key, name[key]];
-      push.apply(arr, rest);
-      obj[action].apply(obj, arr);
+      obj[action].apply(obj, [key, name[key]].concat(rest));
     }
     return false;
   }
@@ -415,9 +404,7 @@ var eventsApi = function(obj, action, name, rest) {
   if (eventSplitter.test(name)) {
     var names = name.split(eventSplitter);
     for (var i = 0, l = names.length; i < l; i++) {
-      arr = [names[i]];
-      push.apply(arr, rest);
-      obj[action].apply(obj, arr);
+      obj[action].apply(obj, [names[i]].concat(rest));
     }
     return false;
   }
@@ -435,7 +422,7 @@ var triggerEvents = function(events, args) {
     case 1: while (++i < l) (ev = events[i]).callback.call(ev.ctx, a1); return;
     case 2: while (++i < l) (ev = events[i]).callback.call(ev.ctx, a1, a2); return;
     case 3: while (++i < l) (ev = events[i]).callback.call(ev.ctx, a1, a2, a3); return;
-    default: while (++i < l) (ev = events[i]).callback.apply(ev.ctx, args);
+    default: while (++i < l) (ev = events[i]).callback.apply(ev.ctx, args); return;
   }
 };
 
@@ -459,6 +446,10 @@ Object.keys(listenMethods).forEach(function(method) {
 // Aliases for backwards compatibility.
 Events.bind   = Events.on;
 Events.unbind = Events.off;
+
+// Allow the `Backbone` object to serve as a global event bus, for folks who
+// want global "pubsub" in a convenient place.
+_.extend(Backbone, Events);
 // Backbone.Model
 // --------------
 
