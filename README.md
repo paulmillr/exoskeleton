@@ -6,10 +6,10 @@ http://exosjs.com
 
 ## What already works
 All features you need for real-world app are working.
-All software tests are passing: (libs = underscore and jquery)
+All software tests are passing: underscore
 
-* Backbone: **with and without** libs
-* [Chaplin](http://chaplinjs.org): **with and without** libs
+* Backbone: **with and without** Underscore
+* [Chaplin](http://chaplinjs.org): **with and without** Underscore
 
 Marionette and other popular plugins: WIP.
 
@@ -18,7 +18,7 @@ Marionette and other popular plugins: WIP.
 Default **and custom** builds:
 
     make # Will create exoskeleton.js
-    make noutils # If you want to use Underscore and jQuery
+    make noutils # If you want to use Underscore
                  # and don't want to include `Exoskeleton.utils`.
     make min     # Minified version.
     # Custom, like this:
@@ -27,10 +27,12 @@ Default **and custom** builds:
 ## Features
 
 * Custom builds
-* No hard dependencies on underscore or jquery
+* No hard dependencies on underscore
 * Support for Bower and [Component(1)](https://github.com/component/component)
 * AMD support
-* Speed: blazing fast when used without jQuery.
+* Speed: blazing fast when used without jQuery with
+  [Backbone.NativeView](https://github.com/akre54/Backbone.NativeView) and
+  [Backbone.NativeAjax](https://github.com/akre54/Backbone.NativeAjax).
 
 Also:
 
@@ -40,7 +42,6 @@ Also:
 
 ## Differences
 
-* When jQuery is not used, you must use `event.delegateTarget` instead of `event.currentTarget` for event delegation. This is because `currentTarget` is not overridable on native non-jQuery events.
 * Declaratively defined view events which point to
   non-existing handler functions are no longer tolerated / skipped.
   Early error is thrown instead.
