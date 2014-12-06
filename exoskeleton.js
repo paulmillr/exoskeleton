@@ -113,170 +113,172 @@
   var utilExists = function(method) {
     return typeof _[method] === 'function';
   };
-utils.result = function result(object, property) {
-  var value = object ? object[property] : undefined;
-  return typeof value === 'function' ? object[property]() : value;
-};
 
-utils.defaults = function defaults(obj) {
-  slice.call(arguments, 1).forEach(function(item) {
-    for (var key in item) if (obj[key] === undefined)
-      obj[key] = item[key];
-  });
-  return obj;
-};
+  utils.result = function result(object, property) {
+    var value = object ? object[property] : undefined;
+    return typeof value === 'function' ? object[property]() : value;
+  };
 
-utils.extend = function extend(obj) {
-  slice.call(arguments, 1).forEach(function(item) {
-    for (var key in item) obj[key] = item[key];
-  });
-  return obj;
-};
-
-var htmlEscapes = {
-  '&': '&amp;',
-  '<': '&lt;',
-  '>': '&gt;',
-  '"': '&quot;',
-  "'": '&#39;'
-};
-
-utils.escape = function escape(string) {
-  return string == null ? '' : String(string).replace(/[&<>"']/g, function(match) {
-    return htmlEscapes[match];
-  });
-};
-
-utils.sortBy = function(obj, value, context) {
-  var iterator = typeof value === 'function' ? value : function(obj){ return obj[value]; };
-  return obj
-    .map(function(value, index, list) {
-      return {
-        value: value,
-        index: index,
-        criteria: iterator.call(context, value, index, list)
-      };
-    })
-    .sort(function(left, right) {
-      var a = left.criteria;
-      var b = right.criteria;
-      if (a !== b) {
-        if (a > b || a === void 0) return 1;
-        if (a < b || b === void 0) return -1;
-      }
-      return left.index - right.index;
-    })
-    .map(function(item) {
-      return item.value;
+  utils.defaults = function defaults(obj) {
+    slice.call(arguments, 1).forEach(function(item) {
+      for (var key in item) if (obj[key] === undefined)
+        obj[key] = item[key];
     });
-};
+    return obj;
+  };
 
-/** Used to generate unique IDs */
-var idCounter = 0;
+  utils.extend = function extend(obj) {
+    slice.call(arguments, 1).forEach(function(item) {
+      for (var key in item) obj[key] = item[key];
+    });
+    return obj;
+  };
 
-utils.uniqueId = function uniqueId(prefix) {
-  var id = ++idCounter + '';
-  return prefix ? prefix + id : id;
-};
+  var htmlEscapes = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  };
 
-utils.has = function(obj, key) {
-  return Object.hasOwnProperty.call(obj, key);
-};
+  utils.escape = function escape(string) {
+    return string == null ? '' : String(string).replace(/[&<>"']/g, function(match) {
+      return htmlEscapes[match];
+    });
+  };
 
-var eq = function(a, b, aStack, bStack) {
-  // Identical objects are equal. `0 === -0`, but they aren't identical.
-  // See the [Harmony `egal` proposal](http://wiki.ecmascript.org/doku.php?id=harmony:egal).
-  if (a === b) return a !== 0 || 1 / a == 1 / b;
-  // A strict comparison is necessary because `null == undefined`.
-  if (a == null || b == null) return a === b;
-  // Unwrap any wrapped objects.
-  //if (a instanceof _) a = a._wrapped;
-  //if (b instanceof _) b = b._wrapped;
-  // Compare `[[Class]]` names.
-  var className = toString.call(a);
-  if (className != toString.call(b)) return false;
-  switch (className) {
-    // Strings, numbers, dates, and booleans are compared by value.
-    case '[object String]':
-      // Primitives and their corresponding object wrappers are equivalent; thus, `"5"` is
-      // equivalent to `new String("5")`.
-      return a == String(b);
-    case '[object Number]':
-      // `NaN`s are equivalent, but non-reflexive. An `egal` comparison is performed for
-      // other numeric values.
-      return a !== +a ? b !== +b : (a === 0 ? 1 / a === 1 / b : a === +b);
-    case '[object Date]':
-    case '[object Boolean]':
-      // Coerce dates and booleans to numeric primitive values. Dates are compared by their
-      // millisecond representations. Note that invalid dates with millisecond representations
-      // of `NaN` are not equivalent.
-      return +a == +b;
-    // RegExps are compared by their source patterns and flags.
-    case '[object RegExp]':
-      return a.source == b.source &&
-             a.global == b.global &&
-             a.multiline == b.multiline &&
-             a.ignoreCase == b.ignoreCase;
-  }
-  if (typeof a != 'object' || typeof b != 'object') return false;
-  // Assume equality for cyclic structures. The algorithm for detecting cyclic
-  // structures is adapted from ES 5.1 section 15.12.3, abstract operation `JO`.
-  var length = aStack.length;
-  while (length--) {
-    // Linear search. Performance is inversely proportional to the number of
-    // unique nested structures.
-    if (aStack[length] == a) return bStack[length] == b;
-  }
-  // Objects with different constructors are not equivalent, but `Object`s
-  // from different frames are.
-  var aCtor = a.constructor, bCtor = b.constructor;
-  if (aCtor !== bCtor && !(typeof aCtor === 'function' && (aCtor instanceof aCtor) &&
-                           typeof bCtor === 'function' && (bCtor instanceof bCtor))) {
-    return false;
-  }
-  // Add the first object to the stack of traversed objects.
-  aStack.push(a);
-  bStack.push(b);
-  var size = 0, result = true;
-  // Recursively compare objects and arrays.
-  if (className === '[object Array]') {
-    // Compare array lengths to determine if a deep comparison is necessary.
-    size = a.length;
-    result = size === b.length;
-    if (result) {
-      // Deep compare the contents, ignoring non-numeric properties.
-      while (size--) {
-        if (!(result = eq(a[size], b[size], aStack, bStack))) break;
+  utils.sortBy = function(obj, value, context) {
+    var iterator = typeof value === 'function' ? value : function(obj){ return obj[value]; };
+    return obj
+      .map(function(value, index, list) {
+        return {
+          value: value,
+          index: index,
+          criteria: iterator.call(context, value, index, list)
+        };
+      })
+      .sort(function(left, right) {
+        var a = left.criteria;
+        var b = right.criteria;
+        if (a !== b) {
+          if (a > b || a === void 0) return 1;
+          if (a < b || b === void 0) return -1;
+        }
+        return left.index - right.index;
+      })
+      .map(function(item) {
+        return item.value;
+      });
+  };
+
+  /** Used to generate unique IDs */
+  var idCounter = 0;
+
+  utils.uniqueId = function uniqueId(prefix) {
+    var id = ++idCounter + '';
+    return prefix ? prefix + id : id;
+  };
+
+  utils.has = function(obj, key) {
+    return Object.hasOwnProperty.call(obj, key);
+  };
+
+  var eq = function(a, b, aStack, bStack) {
+    // Identical objects are equal. `0 === -0`, but they aren't identical.
+    // See the [Harmony `egal` proposal](http://wiki.ecmascript.org/doku.php?id=harmony:egal).
+    if (a === b) return a !== 0 || 1 / a == 1 / b;
+    // A strict comparison is necessary because `null == undefined`.
+    if (a == null || b == null) return a === b;
+    // Unwrap any wrapped objects.
+    //if (a instanceof _) a = a._wrapped;
+    //if (b instanceof _) b = b._wrapped;
+    // Compare `[[Class]]` names.
+    var className = toString.call(a);
+    if (className != toString.call(b)) return false;
+    switch (className) {
+      // Strings, numbers, dates, and booleans are compared by value.
+      case '[object String]':
+        // Primitives and their corresponding object wrappers are equivalent; thus, `"5"` is
+        // equivalent to `new String("5")`.
+        return a == String(b);
+      case '[object Number]':
+        // `NaN`s are equivalent, but non-reflexive. An `egal` comparison is performed for
+        // other numeric values.
+        return a !== +a ? b !== +b : (a === 0 ? 1 / a === 1 / b : a === +b);
+      case '[object Date]':
+      case '[object Boolean]':
+        // Coerce dates and booleans to numeric primitive values. Dates are compared by their
+        // millisecond representations. Note that invalid dates with millisecond representations
+        // of `NaN` are not equivalent.
+        return +a == +b;
+      // RegExps are compared by their source patterns and flags.
+      case '[object RegExp]':
+        return a.source == b.source &&
+               a.global == b.global &&
+               a.multiline == b.multiline &&
+               a.ignoreCase == b.ignoreCase;
+    }
+    if (typeof a != 'object' || typeof b != 'object') return false;
+    // Assume equality for cyclic structures. The algorithm for detecting cyclic
+    // structures is adapted from ES 5.1 section 15.12.3, abstract operation `JO`.
+    var length = aStack.length;
+    while (length--) {
+      // Linear search. Performance is inversely proportional to the number of
+      // unique nested structures.
+      if (aStack[length] == a) return bStack[length] == b;
+    }
+    // Objects with different constructors are not equivalent, but `Object`s
+    // from different frames are.
+    var aCtor = a.constructor, bCtor = b.constructor;
+    if (aCtor !== bCtor && !(typeof aCtor === 'function' && (aCtor instanceof aCtor) &&
+                             typeof bCtor === 'function' && (bCtor instanceof bCtor))) {
+      return false;
+    }
+    // Add the first object to the stack of traversed objects.
+    aStack.push(a);
+    bStack.push(b);
+    var size = 0, result = true;
+    // Recursively compare objects and arrays.
+    if (className === '[object Array]') {
+      // Compare array lengths to determine if a deep comparison is necessary.
+      size = a.length;
+      result = size === b.length;
+      if (result) {
+        // Deep compare the contents, ignoring non-numeric properties.
+        while (size--) {
+          if (!(result = eq(a[size], b[size], aStack, bStack))) break;
+        }
+      }
+    } else {
+      // Deep compare objects.
+      for (var key in a) {
+        if (_.has(a, key)) {
+          // Count the expected number of properties.
+          size++;
+          // Deep compare each member.
+          if (!(result = _.has(b, key) && eq(a[key], b[key], aStack, bStack))) break;
+        }
+      }
+      // Ensure that both objects contain the same number of properties.
+      if (result) {
+        for (key in b) {
+          if (_.has(b, key) && !(size--)) break;
+        }
+        result = !size;
       }
     }
-  } else {
-    // Deep compare objects.
-    for (var key in a) {
-      if (_.has(a, key)) {
-        // Count the expected number of properties.
-        size++;
-        // Deep compare each member.
-        if (!(result = _.has(b, key) && eq(a[key], b[key], aStack, bStack))) break;
-      }
-    }
-    // Ensure that both objects contain the same number of properties.
-    if (result) {
-      for (key in b) {
-        if (_.has(b, key) && !(size--)) break;
-      }
-      result = !size;
-    }
-  }
-  // Remove the first object from the stack of traversed objects.
-  aStack.pop();
-  bStack.pop();
-  return result;
-};
+    // Remove the first object from the stack of traversed objects.
+    aStack.pop();
+    bStack.pop();
+    return result;
+  };
 
-// Perform a deep comparison to check if two objects are equal.
-utils.isEqual = function(a, b) {
-  return eq(a, b, [], []);
-};
+  // Perform a deep comparison to check if two objects are equal.
+  utils.isEqual = function(a, b) {
+    return eq(a, b, [], []);
+  };
+
 // Backbone.Events
 // ---------------
 
@@ -450,6 +452,7 @@ Events.unbind = Events.off;
 // Allow the `Backbone` object to serve as a global event bus, for folks who
 // want global "pubsub" in a convenient place.
 _.extend(Backbone, Events);
+
 // Backbone.Model
 // --------------
 
@@ -801,6 +804,7 @@ if (_.keys) {
     };
   });
 }
+
 // Backbone.Collection
 // -------------------
 
@@ -1228,524 +1232,527 @@ if (utilExists('each')) {
     };
   });
 }
-// Backbone.View
-// -------------
 
-// Backbone Views are almost more convention than they are actual code. A View
-// is simply a JavaScript object that represents a logical chunk of UI in the
-// DOM. This might be a single item, an entire list, a sidebar or panel, or
-// even the surrounding frame which wraps your whole app. Defining a chunk of
-// UI as a **View** allows you to define your DOM events declaratively, without
-// having to worry about render order ... and makes it easy for the view to
-// react to specific changes in the state of your models.
+  // Backbone.View
+  // -------------
 
-// Creating a Backbone.View creates its initial element outside of the DOM,
-// if an existing element is not provided...
-var View = Backbone.View = function(options) {
-  this.cid = _.uniqueId('view');
+  // Backbone Views are almost more convention than they are actual code. A View
+  // is simply a JavaScript object that represents a logical chunk of UI in the
+  // DOM. This might be a single item, an entire list, a sidebar or panel, or
+  // even the surrounding frame which wraps your whole app. Defining a chunk of
+  // UI as a **View** allows you to define your DOM events declaratively, without
+  // having to worry about render order ... and makes it easy for the view to
+  // react to specific changes in the state of your models.
 
-  if (options) Object.keys(options).forEach(function(key) {
-    if (viewOptions.indexOf(key) !== -1) this[key] = options[key];
-  }, this);
+  // Creating a Backbone.View creates its initial element outside of the DOM,
+  // if an existing element is not provided...
+  var View = Backbone.View = function(options) {
+    this.cid = _.uniqueId('view');
 
-  this._ensureElement();
-  this.initialize.apply(this, arguments);
-};
+    if (options) Object.keys(options).forEach(function(key) {
+      if (viewOptions.indexOf(key) !== -1) this[key] = options[key];
+    }, this);
 
-// Cached regex to split keys for `delegate`.
-var delegateEventSplitter = /^(\S+)\s*(.*)$/;
+    this._ensureElement();
+    this.initialize.apply(this, arguments);
+  };
 
-// List of view options to be merged as properties.
-var viewOptions = ['model', 'collection', 'el', 'id', 'attributes', 'className', 'tagName', 'events'];
+  // Cached regex to split keys for `delegate`.
+  var delegateEventSplitter = /^(\S+)\s*(.*)$/;
 
-// Set up all inheritable **Backbone.View** properties and methods.
-_.extend(View.prototype, Events, {
+  // List of view options to be merged as properties.
+  var viewOptions = ['model', 'collection', 'el', 'id', 'attributes', 'className', 'tagName', 'events'];
 
-  // The default `tagName` of a View's element is `"div"`.
-  tagName: 'div',
+  // Set up all inheritable **Backbone.View** properties and methods.
+  _.extend(View.prototype, Events, {
 
-  // jQuery delegate for element lookup, scoped to DOM elements within the
-  // current view. This should be preferred to global lookups where possible.
-  $: function(selector) {
-    return this.$el.find(selector);
-  },
+    // The default `tagName` of a View's element is `"div"`.
+    tagName: 'div',
 
-  // Initialize is an empty function by default. Override it with your own
-  // initialization logic.
-  initialize: function(){},
+    // jQuery delegate for element lookup, scoped to DOM elements within the
+    // current view. This should be preferred to global lookups where possible.
+    $: function(selector) {
+      return this.$el.find(selector);
+    },
 
-  // **render** is the core function that your view should override, in order
-  // to populate its element (`this.el`), with the appropriate HTML. The
-  // convention is for **render** to always return `this`.
-  render: function() {
-    return this;
-  },
+    // Initialize is an empty function by default. Override it with your own
+    // initialization logic.
+    initialize: function(){},
 
-  // Remove this view by taking the element out of the DOM, and removing any
-  // applicable Backbone.Events listeners.
-  remove: function() {
-    this._removeElement();
-    this.stopListening();
-    return this;
-  },
+    // **render** is the core function that your view should override, in order
+    // to populate its element (`this.el`), with the appropriate HTML. The
+    // convention is for **render** to always return `this`.
+    render: function() {
+      return this;
+    },
 
-  // Remove this view's element from the document and all event listeners
-  // attached to it. Exposed for subclasses using an alternative DOM
-  // manipulation API.
-  _removeElement: function() {
-    this.$el.remove();
-  },
+    // Remove this view by taking the element out of the DOM, and removing any
+    // applicable Backbone.Events listeners.
+    remove: function() {
+      this._removeElement();
+      this.stopListening();
+      return this;
+    },
 
-  // Change the view's element (`this.el` property) and re-delegate the
-  // view's events on the new element.
-  setElement: function(element) {
-    this.undelegateEvents();
-    this._setElement(element);
-    this.delegateEvents();
-    return this;
-  },
+    // Remove this view's element from the document and all event listeners
+    // attached to it. Exposed for subclasses using an alternative DOM
+    // manipulation API.
+    _removeElement: function() {
+      this.$el.remove();
+    },
 
-  // Creates the `this.el` and `this.$el` references for this view using the
-  // given `el` and a hash of `attributes`. `el` can be a CSS selector or an
-  // HTML string, a jQuery context or an element. Subclasses can override
-  // this to utilize an alternative DOM manipulation API and are only required
-  // to set the `this.el` property.
-  _setElement: function(el) {
-    if (!Backbone.$) throw new Error('You must either include jQuery or override Backbone.View.prototype methods (Google Backbone.NativeView)');
-    this.$el = el instanceof Backbone.$ ? el : Backbone.$(el);
-    this.el = this.$el[0];
-  },
+    // Change the view's element (`this.el` property) and re-delegate the
+    // view's events on the new element.
+    setElement: function(element) {
+      this.undelegateEvents();
+      this._setElement(element);
+      this.delegateEvents();
+      return this;
+    },
 
-  // Set callbacks, where `this.events` is a hash of
-  //
-  // *{"event selector": "callback"}*
-  //
-  //     {
-  //       'mousedown .title':  'edit',
-  //       'click .button':     'save',
-  //       'click .open':       function(e) { ... }
-  //     }
-  //
-  // pairs. Callbacks will be bound to the view, with `this` set properly.
-  // Uses event delegation for efficiency.
-  // Omitting the selector binds the event to `this.el`.
-  delegateEvents: function(events) {
-    if (!(events || (events = _.result(this, 'events')))) return this;
-    this.undelegateEvents();
-    for (var key in events) {
-      var method = events[key];
-      if (typeof method !== 'function') method = this[events[key]];
-      // if (!method) continue;
-      var match = key.match(delegateEventSplitter);
-      this.delegate(match[1], match[2], method.bind(this));
-    }
-    return this;
-  },
+    // Creates the `this.el` and `this.$el` references for this view using the
+    // given `el` and a hash of `attributes`. `el` can be a CSS selector or an
+    // HTML string, a jQuery context or an element. Subclasses can override
+    // this to utilize an alternative DOM manipulation API and are only required
+    // to set the `this.el` property.
+    _setElement: function(el) {
+      if (!Backbone.$) throw new Error('You must either include jQuery or override Backbone.View.prototype methods (Google Backbone.NativeView)');
+      this.$el = el instanceof Backbone.$ ? el : Backbone.$(el);
+      this.el = this.$el[0];
+    },
 
-  // Add a single event listener to the view's element (or a child element
-  // using `selector`). This only works for delegate-able events: not `focus`,
-  // `blur`, and not `change`, `submit`, and `reset` in Internet Explorer.
-  delegate: function(eventName, selector, listener) {
-    this.$el.on(eventName + '.delegateEvents' + this.cid, selector, listener);
-  },
+    // Set callbacks, where `this.events` is a hash of
+    //
+    // *{"event selector": "callback"}*
+    //
+    //     {
+    //       'mousedown .title':  'edit',
+    //       'click .button':     'save',
+    //       'click .open':       function(e) { ... }
+    //     }
+    //
+    // pairs. Callbacks will be bound to the view, with `this` set properly.
+    // Uses event delegation for efficiency.
+    // Omitting the selector binds the event to `this.el`.
+    delegateEvents: function(events) {
+      if (!(events || (events = _.result(this, 'events')))) return this;
+      this.undelegateEvents();
+      for (var key in events) {
+        var method = events[key];
+        if (typeof method !== 'function') method = this[events[key]];
+        // if (!method) continue;
+        var match = key.match(delegateEventSplitter);
+        this.delegate(match[1], match[2], method.bind(this));
+      }
+      return this;
+    },
 
-  // Clears all callbacks previously bound to the view by `delegateEvents`.
-  // You usually don't need to use this, but may wish to if you have multiple
-  // Backbone views attached to the same DOM element.
-  undelegateEvents: function() {
-    if (this.$el) this.$el.off('.delegateEvents' + this.cid);
-    return this;
-  },
+    // Add a single event listener to the view's element (or a child element
+    // using `selector`). This only works for delegate-able events: not `focus`,
+    // `blur`, and not `change`, `submit`, and `reset` in Internet Explorer.
+    delegate: function(eventName, selector, listener) {
+      this.$el.on(eventName + '.delegateEvents' + this.cid, selector, listener);
+    },
 
-  // A finer-grained `undelegateEvents` for removing a single delegated event.
-  // `selector` and `listener` are both optional.
-  undelegate: function(eventName, selector, listener) {
-    this.$el.off(eventName + '.delegateEvents' + this.cid, selector, listener);
-  },
+    // Clears all callbacks previously bound to the view by `delegateEvents`.
+    // You usually don't need to use this, but may wish to if you have multiple
+    // Backbone views attached to the same DOM element.
+    undelegateEvents: function() {
+      if (this.$el) this.$el.off('.delegateEvents' + this.cid);
+      return this;
+    },
 
-  // Produces a DOM element to be assigned to your view. Exposed for
-  // subclasses using an alternative DOM manipulation API.
-  _createElement: function(tagName) {
-    return document.createElement(tagName);
-  },
+    // A finer-grained `undelegateEvents` for removing a single delegated event.
+    // `selector` and `listener` are both optional.
+    undelegate: function(eventName, selector, listener) {
+      this.$el.off(eventName + '.delegateEvents' + this.cid, selector, listener);
+    },
 
-  // Ensure that the View has a DOM element to render into.
-  // If `this.el` is a string, pass it through `$()`, take the first
-  // matching element, and re-assign it to `el`. Otherwise, create
-  // an element from the `id`, `className` and `tagName` properties.
-  _ensureElement: function() {
-    if (!this.el) {
-      var attrs = _.extend({}, _.result(this, 'attributes'));
-      if (this.id) attrs.id = _.result(this, 'id');
-      if (this.className) attrs['class'] = _.result(this, 'className');
-      this.setElement(this._createElement(_.result(this, 'tagName')));
-      this._setAttributes(attrs);
-    } else {
-      this.setElement(_.result(this, 'el'));
-    }
-  },
+    // Produces a DOM element to be assigned to your view. Exposed for
+    // subclasses using an alternative DOM manipulation API.
+    _createElement: function(tagName) {
+      return document.createElement(tagName);
+    },
 
-  // Set attributes from a hash on this view's element.  Exposed for
-  // subclasses using an alternative DOM manipulation API.
-  _setAttributes: function(attributes) {
-    this.$el.attr(attributes);
-  }
-
-});
-// Backbone.sync
-// -------------
-
-// Override this function to change the manner in which Backbone persists
-// models to the server. You will be passed the type of request, and the
-// model in question. By default, makes a RESTful Ajax request
-// to the model's `url()`. Some possible customizations could be:
-//
-// * Use `setTimeout` to batch rapid-fire updates into a single request.
-// * Send up the models as XML instead of JSON.
-// * Persist models via WebSockets instead of Ajax.
-Backbone.sync = function(method, model, options) {
-  options || (options = {})
-
-  var type = methodMap[method];
-
-  // Default JSON-request options.
-  var params = {type: type, dataType: 'json'};
-
-  // Ensure that we have a URL.
-  if (!options.url) {
-    params.url = _.result(model, 'url') || urlError();
-  }
-
-  // Ensure that we have the appropriate request data.
-  if (options.data == null && model && (method === 'create' || method === 'update' || method === 'patch')) {
-    params.contentType = 'application/json';
-    params.data = JSON.stringify(options.attrs || model.toJSON(options));
-  }
-
-  // Don't process data on a non-GET request.
-  if (params.type !== 'GET') {
-    params.processData = false;
-  }
-
-  // Make the request, allowing the user to override any Ajax options.
-  var xhr = options.xhr = Backbone.ajax(_.extend(params, options));
-  model.trigger('request', model, xhr, options);
-  return xhr;
-};
-
-// Map from CRUD to HTTP for our default `Backbone.sync` implementation.
-var methodMap = {
-  'create': 'POST',
-  'update': 'PUT',
-  'patch':  'PATCH',
-  'delete': 'DELETE',
-  'read':   'GET'
-};
-
-// Set the default implementation of `Backbone.ajax` to proxy through to `$`.
-// Override this if you'd like to use a different library.
-Backbone.ajax = function() {
-  if (!Backbone.$) throw new Error('You must either include jQuery or override Backbone.ajax (Google Backbone.NativeAjax)');
-  return Backbone.$.ajax.apply(Backbone.$, arguments);
-};
-// Backbone.Router
-// ---------------
-
-// Routers map faux-URLs to actions, and fire events when routes are
-// matched. Creating a new one sets its `routes` hash, if not set statically.
-var Router = Backbone.Router = function(options) {
-  options || (options = {});
-  if (options.routes) this.routes = options.routes;
-  this._bindRoutes();
-  this.initialize.apply(this, arguments);
-};
-
-// Cached regular expressions for matching named param parts and splatted
-// parts of route strings.
-var optionalParam = /\((.*?)\)/g;
-var namedParam    = /(\(\?)?:\w+/g;
-var splatParam    = /\*\w+/g;
-var escapeRegExp  = /[\-{}\[\]+?.,\\\^$|#\s]/g;
-
-var isRegExp = function(value) {
-  return value ? (typeof value === 'object' && toString.call(value) === '[object RegExp]') : false;
-};
-
-// Set up all inheritable **Backbone.Router** properties and methods.
-_.extend(Router.prototype, Events, {
-
-  // Initialize is an empty function by default. Override it with your own
-  // initialization logic.
-  initialize: function(){},
-
-  // Manually bind a single named route to a callback. For example:
-  //
-  //     this.route('search/:query/p:num', 'search', function(query, num) {
-  //       ...
-  //     });
-  //
-  route: function(route, name, callback) {
-    if (!isRegExp(route)) route = this._routeToRegExp(route);
-    if (typeof name === 'function') {
-      callback = name;
-      name = '';
-    }
-    if (!callback) callback = this[name];
-    var router = this;
-    Backbone.history.route(route, function(fragment) {
-      var args = router._extractParameters(route, fragment);
-      router.execute(callback, args);
-      router.trigger.apply(router, ['route:' + name].concat(args));
-      router.trigger('route', name, args);
-      Backbone.history.trigger('route', router, name, args);
-    });
-    return this;
-  },
-
-  // Execute a route handler with the provided parameters.  This is an
-  // excellent place to do pre-route setup or post-route cleanup.
-  execute: function(callback, args) {
-    if (callback) callback.apply(this, args);
-  },
-
-  // Simple proxy to `Backbone.history` to save a fragment into the history.
-  navigate: function(fragment, options) {
-    Backbone.history.navigate(fragment, options);
-    return this;
-  },
-
-  // Bind all defined routes to `Backbone.history`. We have to reverse the
-  // order of the routes here to support behavior where the most general
-  // routes can be defined at the bottom of the route map.
-  _bindRoutes: function() {
-    if (!this.routes) return;
-    this.routes = _.result(this, 'routes');
-    var route, routes = Object.keys(this.routes);
-    while ((route = routes.pop()) != null) {
-      this.route(route, this.routes[route]);
-    }
-  },
-
-  // Convert a route string into a regular expression, suitable for matching
-  // against the current location hash.
-  _routeToRegExp: function(route) {
-    route = route.replace(escapeRegExp, '\\$&')
-                 .replace(optionalParam, '(?:$1)?')
-                 .replace(namedParam, function(match, optional) {
-                   return optional ? match : '([^/?]+)';
-                 })
-                 .replace(splatParam, '([^?]*?)');
-    return new RegExp('^' + route + '(?:\\?([\\s\\S]*))?$');
-  },
-
-  // Given a route, and a URL fragment that it matches, return the array of
-  // extracted decoded parameters. Empty or unmatched parameters will be
-  // treated as `null` to normalize cross-browser behavior.
-  _extractParameters: function(route, fragment) {
-    var params = route.exec(fragment).slice(1);
-    return params.map(function(param, i) {
-      // Don't decode the search params.
-      if (i === params.length - 1) return param || null;
-      return param ? decodeURIComponent(param) : null;
-    });
-  }
-
-});
-// Backbone.History
-// ----------------
-
-// Handles cross-browser history management, based on either
-// [pushState](http://diveintohtml5.info/history.html) and real URLs, or
-// [onhashchange](https://developer.mozilla.org/en-US/docs/DOM/window.onhashchange)
-// and URL fragments.
-var History = Backbone.History = function() {
-  this.handlers = [];
-  this.checkUrl = this.checkUrl.bind(this);
-
-  // Ensure that `History` can be used outside of the browser.
-  if (typeof window !== 'undefined') {
-    this.location = window.location;
-    this.history = window.history;
-  }
-};
-
-// Cached regex for stripping a leading hash/slash and trailing space.
-var routeStripper = /^[#\/]|\s+$/g;
-
-// Cached regex for stripping leading and trailing slashes.
-var rootStripper = /^\/+|\/+$/g;
-
-// Cached regex for removing a trailing slash.
-var trailingSlash = /\/$/;
-
-// Cached regex for stripping urls of hash and query.
-var pathStripper = /[#].*$/;
-
-// Has the history handling already been started?
-History.started = false;
-
-// Set up all inheritable **Backbone.History** properties and methods.
-_.extend(History.prototype, Events, {
-
-  // Are we at the app root?
-  atRoot: function() {
-    return this.location.pathname.replace(/[^\/]$/, '$&/') === this.root;
-  },
-
-  // Gets the true hash value. Cannot use location.hash directly due to bug
-  // in Firefox where location.hash will always be decoded.
-  getHash: function(window) {
-    var match = (window || this).location.href.match(/#(.*)$/);
-    return match ? match[1] : '';
-  },
-
-  // Get the cross-browser normalized URL fragment, either from the URL,
-  // the hash, or the override.
-  getFragment: function(fragment, forcePushState) {
-    if (fragment == null) {
-      if (this._wantsPushState || !this._wantsHashChange) {
-        fragment = decodeURI(this.location.pathname + this.location.search);
-        var root = this.root.replace(trailingSlash, '');
-        if (!fragment.indexOf(root)) fragment = fragment.slice(root.length);
+    // Ensure that the View has a DOM element to render into.
+    // If `this.el` is a string, pass it through `$()`, take the first
+    // matching element, and re-assign it to `el`. Otherwise, create
+    // an element from the `id`, `className` and `tagName` properties.
+    _ensureElement: function() {
+      if (!this.el) {
+        var attrs = _.extend({}, _.result(this, 'attributes'));
+        if (this.id) attrs.id = _.result(this, 'id');
+        if (this.className) attrs['class'] = _.result(this, 'className');
+        this.setElement(this._createElement(_.result(this, 'tagName')));
+        this._setAttributes(attrs);
       } else {
-        fragment = this.getHash();
+        this.setElement(_.result(this, 'el'));
       }
+    },
+
+    // Set attributes from a hash on this view's element.  Exposed for
+    // subclasses using an alternative DOM manipulation API.
+    _setAttributes: function(attributes) {
+      this.$el.attr(attributes);
     }
-    return fragment.replace(routeStripper, '');
-  },
+  });
+  // Backbone.sync
+  // -------------
 
-  // Start the hash change handling, returning `true` if the current URL matches
-  // an existing route, and `false` otherwise.
-  start: function(options) {
-    if (History.started) throw new Error("Backbone.history has already been started");
-    History.started = true;
-
-    // Figure out the initial configuration.
-    // Is pushState desired or should we use hashchange only?
-    this.options          = _.extend({root: '/'}, this.options, options);
-    this.root             = this.options.root;
-    this._wantsHashChange = this.options.hashChange !== false;
-    this._wantsPushState  = !!this.options.pushState;
-    var fragment          = this.getFragment();
-
-    // Normalize root to always include a leading and trailing slash.
-    this.root = ('/' + this.root + '/').replace(rootStripper, '/');
-
-    // Depending on whether we're using pushState or hashes, determine how we
-    // check the URL state.
-    if (this._wantsPushState) {
-      window.addEventListener('popstate', this.checkUrl, false);
-    } else if (this._wantsHashChange) {
-      window.addEventListener('hashchange', this.checkUrl, false);
-    }
-
-    // Determine if we need to change the base url, for a pushState link
-    // opened by a non-pushState browser.
-    this.fragment = fragment;
-    var loc = this.location;
-
-    // Transition from hashChange to pushState or vice versa if both are
-    // requested.
-    if (this._wantsHashChange && this._wantsPushState) {
-
-      // If we've started out with a hash-based route, but we're currently
-      // in a browser where it could be `pushState`-based instead...
-      if (this.atRoot() && loc.hash) {
-        this.fragment = this.getHash().replace(routeStripper, '');
-        this.history.replaceState({}, document.title, this.root + this.fragment);
-      }
-
-    }
-
-    if (!this.options.silent) return this.loadUrl();
-  },
-
-  // Disable Backbone.history, perhaps temporarily. Not useful in a real app,
-  // but possibly useful for unit testing Routers.
-  stop: function() {
-    window.removeEventListener('popstate', this.checkUrl);
-    window.removeEventListener('hashchange', this.checkUrl);
-    History.started = false;
-  },
-
-  // Add a route to be tested when the fragment changes. Routes added later
-  // may override previous routes.
-  route: function(route, callback) {
-    this.handlers.unshift({route: route, callback: callback});
-  },
-
-  // Checks the current URL to see if it has changed, and if it has,
-  // calls `loadUrl`.
-  checkUrl: function() {
-    var current = this.getFragment();
-    if (current === this.fragment) return false;
-    this.loadUrl();
-  },
-
-  // Attempt to load the current URL fragment. If a route succeeds with a
-  // match, returns `true`. If no defined routes matches the fragment,
-  // returns `false`.
-  loadUrl: function(fragment) {
-    fragment = this.fragment = this.getFragment(fragment);
-    return this.handlers.some(function(handler) {
-      if (handler.route.test(fragment)) {
-        handler.callback(fragment);
-        return true;
-      }
-    });
-  },
-
-  // Save a fragment into the hash history, or replace the URL state if the
-  // 'replace' option is passed. You are responsible for properly URL-encoding
-  // the fragment in advance.
+  // Override this function to change the manner in which Backbone persists
+  // models to the server. You will be passed the type of request, and the
+  // model in question. By default, makes a RESTful Ajax request
+  // to the model's `url()`. Some possible customizations could be:
   //
-  // The options object can contain `trigger: true` if you wish to have the
-  // route callback be fired (not usually desirable), or `replace: true`, if
-  // you wish to modify the current URL without adding an entry to the history.
-  navigate: function(fragment, options) {
-    if (!History.started) return false;
-    if (!options || options === true) options = {trigger: !!options};
+  // * Use `setTimeout` to batch rapid-fire updates into a single request.
+  // * Send up the models as XML instead of JSON.
+  // * Persist models via WebSockets instead of Ajax.
+  Backbone.sync = function(method, model, options) {
+    options || (options = {})
 
-    var url = this.root + (fragment = this.getFragment(fragment || ''));
+    var type = methodMap[method];
 
-    // Strip the hash for matching.
-    fragment = fragment.replace(pathStripper, '');
+    // Default JSON-request options.
+    var params = {type: type, dataType: 'json'};
 
-    if (this.fragment === fragment) return;
-    this.fragment = fragment;
-
-    // Don't include a trailing slash on the root.
-    if (fragment === '' && url !== '/') url = url.slice(0, -1);
-
-    // If we're using pushState we use it to set the fragment as a real URL.
-    if (this._wantsPushState) {
-      this.history[options.replace ? 'replaceState' : 'pushState']({}, document.title, url);
-
-    // If hash changes haven't been explicitly disabled, update the hash
-    // fragment to store history.
-    } else if (this._wantsHashChange) {
-      this._updateHash(this.location, fragment, options.replace);
-    // If you've told us that you explicitly don't want fallback hashchange-
-    // based history, then `navigate` becomes a page refresh.
-    } else {
-      return this.location.assign(url);
+    // Ensure that we have a URL.
+    if (!options.url) {
+      params.url = _.result(model, 'url') || urlError();
     }
-    if (options.trigger) return this.loadUrl(fragment);
-  },
 
-  // Update the hash location, either replacing the current entry, or adding
-  // a new one to the browser history.
-  _updateHash: function(location, fragment, replace) {
-    if (replace) {
-      var href = location.href.replace(/(javascript:|#).*$/, '');
-      location.replace(href + '#' + fragment);
-    } else {
-      // Some browsers require that `hash` contains a leading #.
-      location.hash = '#' + fragment;
+    // Ensure that we have the appropriate request data.
+    if (options.data == null && model && (method === 'create' || method === 'update' || method === 'patch')) {
+      params.contentType = 'application/json';
+      params.data = JSON.stringify(options.attrs || model.toJSON(options));
     }
-  }
 
-});
+    // Don't process data on a non-GET request.
+    if (params.type !== 'GET') {
+      params.processData = false;
+    }
+
+    // Make the request, allowing the user to override any Ajax options.
+    var xhr = options.xhr = Backbone.ajax(_.extend(params, options));
+    model.trigger('request', model, xhr, options);
+    return xhr;
+  };
+
+  // Map from CRUD to HTTP for our default `Backbone.sync` implementation.
+  var methodMap = {
+    'create': 'POST',
+    'update': 'PUT',
+    'patch':  'PATCH',
+    'delete': 'DELETE',
+    'read':   'GET'
+  };
+
+  // Set the default implementation of `Backbone.ajax` to proxy through to `$`.
+  // Override this if you'd like to use a different library.
+  Backbone.ajax = function() {
+    if (!Backbone.$) throw new Error('You must either include jQuery or override Backbone.ajax (Google Backbone.NativeAjax)');
+    return Backbone.$.ajax.apply(Backbone.$, arguments);
+  };
+
+  // Backbone.Router
+  // ---------------
+
+  // Routers map faux-URLs to actions, and fire events when routes are
+  // matched. Creating a new one sets its `routes` hash, if not set statically.
+  var Router = Backbone.Router = function(options) {
+    options || (options = {});
+    if (options.routes) this.routes = options.routes;
+    this._bindRoutes();
+    this.initialize.apply(this, arguments);
+  };
+
+  // Cached regular expressions for matching named param parts and splatted
+  // parts of route strings.
+  var optionalParam = /\((.*?)\)/g;
+  var namedParam    = /(\(\?)?:\w+/g;
+  var splatParam    = /\*\w+/g;
+  var escapeRegExp  = /[\-{}\[\]+?.,\\\^$|#\s]/g;
+
+  var isRegExp = function(value) {
+    return value ? (typeof value === 'object' && toString.call(value) === '[object RegExp]') : false;
+  };
+
+  // Set up all inheritable **Backbone.Router** properties and methods.
+  _.extend(Router.prototype, Events, {
+
+    // Initialize is an empty function by default. Override it with your own
+    // initialization logic.
+    initialize: function(){},
+
+    // Manually bind a single named route to a callback. For example:
+    //
+    //     this.route('search/:query/p:num', 'search', function(query, num) {
+    //       ...
+    //     });
+    //
+    route: function(route, name, callback) {
+      if (!isRegExp(route)) route = this._routeToRegExp(route);
+      if (typeof name === 'function') {
+        callback = name;
+        name = '';
+      }
+      if (!callback) callback = this[name];
+      var router = this;
+      Backbone.history.route(route, function(fragment) {
+        var args = router._extractParameters(route, fragment);
+        router.execute(callback, args);
+        router.trigger.apply(router, ['route:' + name].concat(args));
+        router.trigger('route', name, args);
+        Backbone.history.trigger('route', router, name, args);
+      });
+      return this;
+    },
+
+    // Execute a route handler with the provided parameters.  This is an
+    // excellent place to do pre-route setup or post-route cleanup.
+    execute: function(callback, args) {
+      if (callback) callback.apply(this, args);
+    },
+
+    // Simple proxy to `Backbone.history` to save a fragment into the history.
+    navigate: function(fragment, options) {
+      Backbone.history.navigate(fragment, options);
+      return this;
+    },
+
+    // Bind all defined routes to `Backbone.history`. We have to reverse the
+    // order of the routes here to support behavior where the most general
+    // routes can be defined at the bottom of the route map.
+    _bindRoutes: function() {
+      if (!this.routes) return;
+      this.routes = _.result(this, 'routes');
+      var route, routes = Object.keys(this.routes);
+      while ((route = routes.pop()) != null) {
+        this.route(route, this.routes[route]);
+      }
+    },
+
+    // Convert a route string into a regular expression, suitable for matching
+    // against the current location hash.
+    _routeToRegExp: function(route) {
+      route = route.replace(escapeRegExp, '\\$&')
+                   .replace(optionalParam, '(?:$1)?')
+                   .replace(namedParam, function(match, optional) {
+                     return optional ? match : '([^/?]+)';
+                   })
+                   .replace(splatParam, '([^?]*?)');
+      return new RegExp('^' + route + '(?:\\?([\\s\\S]*))?$');
+    },
+
+    // Given a route, and a URL fragment that it matches, return the array of
+    // extracted decoded parameters. Empty or unmatched parameters will be
+    // treated as `null` to normalize cross-browser behavior.
+    _extractParameters: function(route, fragment) {
+      var params = route.exec(fragment).slice(1);
+      return params.map(function(param, i) {
+        // Don't decode the search params.
+        if (i === params.length - 1) return param || null;
+        return param ? decodeURIComponent(param) : null;
+      });
+    }
+
+  });
+
+  // Backbone.History
+  // ----------------
+
+  // Handles cross-browser history management, based on either
+  // [pushState](http://diveintohtml5.info/history.html) and real URLs, or
+  // [onhashchange](https://developer.mozilla.org/en-US/docs/DOM/window.onhashchange)
+  // and URL fragments.
+  var History = Backbone.History = function() {
+    this.handlers = [];
+    this.checkUrl = this.checkUrl.bind(this);
+
+    // Ensure that `History` can be used outside of the browser.
+    if (typeof window !== 'undefined') {
+      this.location = window.location;
+      this.history = window.history;
+    }
+  };
+
+  // Cached regex for stripping a leading hash/slash and trailing space.
+  var routeStripper = /^[#\/]|\s+$/g;
+
+  // Cached regex for stripping leading and trailing slashes.
+  var rootStripper = /^\/+|\/+$/g;
+
+  // Cached regex for removing a trailing slash.
+  var trailingSlash = /\/$/;
+
+  // Cached regex for stripping urls of hash and query.
+  var pathStripper = /[#].*$/;
+
+  // Has the history handling already been started?
+  History.started = false;
+
+  // Set up all inheritable **Backbone.History** properties and methods.
+  _.extend(History.prototype, Events, {
+
+    // Are we at the app root?
+    atRoot: function() {
+      return this.location.pathname.replace(/[^\/]$/, '$&/') === this.root;
+    },
+
+    // Gets the true hash value. Cannot use location.hash directly due to bug
+    // in Firefox where location.hash will always be decoded.
+    getHash: function(window) {
+      var match = (window || this).location.href.match(/#(.*)$/);
+      return match ? match[1] : '';
+    },
+
+    // Get the cross-browser normalized URL fragment, either from the URL,
+    // the hash, or the override.
+    getFragment: function(fragment, forcePushState) {
+      if (fragment == null) {
+        if (this._wantsPushState || !this._wantsHashChange) {
+          fragment = decodeURI(this.location.pathname + this.location.search);
+          var root = this.root.replace(trailingSlash, '');
+          if (!fragment.indexOf(root)) fragment = fragment.slice(root.length);
+        } else {
+          fragment = this.getHash();
+        }
+      }
+      return fragment.replace(routeStripper, '');
+    },
+
+    // Start the hash change handling, returning `true` if the current URL matches
+    // an existing route, and `false` otherwise.
+    start: function(options) {
+      if (History.started) throw new Error("Backbone.history has already been started");
+      History.started = true;
+
+      // Figure out the initial configuration.
+      // Is pushState desired or should we use hashchange only?
+      this.options          = _.extend({root: '/'}, this.options, options);
+      this.root             = this.options.root;
+      this._wantsHashChange = this.options.hashChange !== false;
+      this._wantsPushState  = !!this.options.pushState;
+      var fragment          = this.getFragment();
+
+      // Normalize root to always include a leading and trailing slash.
+      this.root = ('/' + this.root + '/').replace(rootStripper, '/');
+
+      // Depending on whether we're using pushState or hashes, determine how we
+      // check the URL state.
+      if (this._wantsPushState) {
+        window.addEventListener('popstate', this.checkUrl, false);
+      } else if (this._wantsHashChange) {
+        window.addEventListener('hashchange', this.checkUrl, false);
+      }
+
+      // Determine if we need to change the base url, for a pushState link
+      // opened by a non-pushState browser.
+      this.fragment = fragment;
+      var loc = this.location;
+
+      // Transition from hashChange to pushState or vice versa if both are
+      // requested.
+      if (this._wantsHashChange && this._wantsPushState) {
+
+        // If we've started out with a hash-based route, but we're currently
+        // in a browser where it could be `pushState`-based instead...
+        if (this.atRoot() && loc.hash) {
+          this.fragment = this.getHash().replace(routeStripper, '');
+          this.history.replaceState({}, document.title, this.root + this.fragment);
+        }
+
+      }
+
+      if (!this.options.silent) return this.loadUrl();
+    },
+
+    // Disable Backbone.history, perhaps temporarily. Not useful in a real app,
+    // but possibly useful for unit testing Routers.
+    stop: function() {
+      window.removeEventListener('popstate', this.checkUrl);
+      window.removeEventListener('hashchange', this.checkUrl);
+      History.started = false;
+    },
+
+    // Add a route to be tested when the fragment changes. Routes added later
+    // may override previous routes.
+    route: function(route, callback) {
+      this.handlers.unshift({route: route, callback: callback});
+    },
+
+    // Checks the current URL to see if it has changed, and if it has,
+    // calls `loadUrl`.
+    checkUrl: function() {
+      var current = this.getFragment();
+      if (current === this.fragment) return false;
+      this.loadUrl();
+    },
+
+    // Attempt to load the current URL fragment. If a route succeeds with a
+    // match, returns `true`. If no defined routes matches the fragment,
+    // returns `false`.
+    loadUrl: function(fragment) {
+      fragment = this.fragment = this.getFragment(fragment);
+      return this.handlers.some(function(handler) {
+        if (handler.route.test(fragment)) {
+          handler.callback(fragment);
+          return true;
+        }
+      });
+    },
+
+    // Save a fragment into the hash history, or replace the URL state if the
+    // 'replace' option is passed. You are responsible for properly URL-encoding
+    // the fragment in advance.
+    //
+    // The options object can contain `trigger: true` if you wish to have the
+    // route callback be fired (not usually desirable), or `replace: true`, if
+    // you wish to modify the current URL without adding an entry to the history.
+    navigate: function(fragment, options) {
+      if (!History.started) return false;
+      if (!options || options === true) options = {trigger: !!options};
+
+      var url = this.root + (fragment = this.getFragment(fragment || ''));
+
+      // Strip the hash for matching.
+      fragment = fragment.replace(pathStripper, '');
+
+      if (this.fragment === fragment) return;
+      this.fragment = fragment;
+
+      // Don't include a trailing slash on the root.
+      if (fragment === '' && url !== '/') url = url.slice(0, -1);
+
+      // If we're using pushState we use it to set the fragment as a real URL.
+      if (this._wantsPushState) {
+        this.history[options.replace ? 'replaceState' : 'pushState']({}, document.title, url);
+
+      // If hash changes haven't been explicitly disabled, update the hash
+      // fragment to store history.
+      } else if (this._wantsHashChange) {
+        this._updateHash(this.location, fragment, options.replace);
+      // If you've told us that you explicitly don't want fallback hashchange-
+      // based history, then `navigate` becomes a page refresh.
+      } else {
+        return this.location.assign(url);
+      }
+      if (options.trigger) return this.loadUrl(fragment);
+    },
+
+    // Update the hash location, either replacing the current entry, or adding
+    // a new one to the browser history.
+    _updateHash: function(location, fragment, replace) {
+      if (replace) {
+        var href = location.href.replace(/(javascript:|#).*$/, '');
+        location.replace(href + '#' + fragment);
+      } else {
+        // Some browsers require that `hash` contains a leading #.
+        location.hash = '#' + fragment;
+      }
+    }
+
+  });
+
   // !!!
   // Init.
   ['Model', 'Collection', 'Router', 'View', 'History'].forEach(function(name) {
