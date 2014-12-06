@@ -1311,6 +1311,7 @@ _.extend(View.prototype, Events, {
   // this to utilize an alternative DOM manipulation API and are only required
   // to set the `this.el` property.
   _setElement: function(el) {
+    if (!Backbone.$) throw new Error('You must either include jQuery or override Backbone.View.prototype methods (Google Backbone.NativeView)');
     this.$el = el instanceof Backbone.$ ? el : Backbone.$(el);
     this.el = this.$el[0];
   },
@@ -1444,6 +1445,7 @@ var methodMap = {
 // Set the default implementation of `Backbone.ajax` to proxy through to `$`.
 // Override this if you'd like to use a different library.
 Backbone.ajax = function() {
+  if (!Backbone.$) throw new Error('You must either include jQuery or override Backbone.ajax (Google Backbone.NativeAjax)');
   return Backbone.$.ajax.apply(Backbone.$, arguments);
 };
 // Backbone.Router
