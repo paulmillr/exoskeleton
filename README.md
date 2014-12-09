@@ -36,7 +36,6 @@ Default **and custom** builds:
 
 Also:
 
-* Router with query string support
 * All params are allowed for model attributes, for example `model.get('constructor')` [(jashkenas/backbone#1495)](https://github.com/jashkenas/backbone/issues/1495)
 * Event triggering on disposed objects is [20 times faster](http://jsperf.com/exoskeleton-events-vs-backbone-events)
 
