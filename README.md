@@ -32,7 +32,8 @@ Default **and custom** builds:
 * AMD support
 * Speed: blazing fast when used without jQuery with
   [Backbone.NativeView](https://github.com/akre54/Backbone.NativeView) and
-  [Backbone.NativeAjax](https://github.com/akre54/Backbone.NativeAjax).
+  [Backbone.NativeAjax](https://github.com/akre54/Backbone.NativeAjax) (see
+  the [wiki page](https://github.com/paulmillr/exoskeleton/wiki/Exoskeleton-without-jQuery)).
 
 Also:
 
