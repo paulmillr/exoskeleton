@@ -19,7 +19,7 @@
   "devDependencies": {
     "jquery": "~2.0.0",
     "underscore": "~1.6.0",
-    "qunit": "~1"
+    "qunit": "<1.15"
   },
   "license": "MIT",
   "ignore": [
