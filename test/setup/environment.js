@@ -2,12 +2,14 @@
 
   var sync = Backbone.sync;
   var ajax = Backbone.ajax;
+  var emulateHTTP = Backbone.emulateHTTP;
+  var emulateJSON = Backbone.emulateJSON;
   var history = window.history;
   var pushState = history.pushState;
   var replaceState = history.replaceState;
 
   QUnit.testStart(function() {
-    var env = this.config.current.testEnvironment;
+    var env = QUnit.config.current.testEnvironment;
 
     // We never want to actually call these during tests.
     history.pushState = history.replaceState = function(){};
@@ -32,6 +34,8 @@
   QUnit.testDone(function() {
     Backbone.sync = sync;
     Backbone.ajax = ajax;
+    Backbone.emulateHTTP = emulateHTTP;
+    Backbone.emulateJSON = emulateJSON;
     history.pushState = pushState;
     history.replaceState = replaceState;
   });

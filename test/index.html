@@ -5,12 +5,15 @@
   <title>Exoskeleton Test Suite</title>
   <link rel="stylesheet" href="../bower_components/qunit/qunit/qunit.css" type="text/css" media="screen">
   <link rel="icon" href="../docs/images/favicon.ico">
+</head>
+<body>
   <script src="../bower_components/jquery/jquery.js"></script>
   <script src="../exoskeleton.js"></script>
-  <script src="test-shims.js"></script>
+  <script src="setup/test-shims.js"></script>
   <script src="../bower_components/underscore/underscore.js"></script>
   <script src="../bower_components/qunit/qunit/qunit.js"></script>
-  <script src="environment.js"></script>
+  <script src="setup/dom-setup.js"></script>
+  <script src="setup/environment.js"></script>
   <script src="noconflict.js"></script>
   <script src="events.js"></script>
   <script src="model.js"></script>
@@ -18,13 +21,5 @@
   <script src="router.js"></script>
   <script src="view.js"></script>
   <script src="sync.js"></script>
-</head>
-<body>
-  <div id="qunit"></div>
-  <div id="qunit-fixture">
-    <div id='testElement'>
-      <h1>Test</h1>
-    </div>
-  </div>
 </body>
 </html>
