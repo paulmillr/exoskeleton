@@ -45,6 +45,7 @@ Also:
 * Declaratively defined view events which point to
   non-existing handler functions are no longer tolerated / skipped.
   Early error is thrown instead.
+* No hash-based routing. Only `pushState` urls.
 * In no-underscore environment, there are no underscore-inspired
   Collection methods (each, pluck etc.), but there are ES5-inspired methods:
 
