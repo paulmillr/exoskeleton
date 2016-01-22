@@ -465,6 +465,7 @@ _.extend(Backbone, Events);
 // is automatically generated and assigned for you.
 var Model = Backbone.Model = function(attributes, options) {
   var attrs = attributes || {};
+  typeof this.properties === "function" && this.properties();
   options || (options = {});
   this.cid = _.uniqueId('c');
   this.attributes = Object.create(null);
@@ -820,6 +821,7 @@ if (_.keys) {
 // its models in sort order, as they're added and removed.
 var Collection = Backbone.Collection = function(models, options) {
   options || (options = {});
+  typeof this.properties === "function" && this.properties();
   if (options.model) this.model = options.model;
   if (options.comparator !== void 0) this.comparator = options.comparator;
   this._reset();
@@ -1247,6 +1249,7 @@ if (utilExists('each')) {
   // Creating a Backbone.View creates its initial element outside of the DOM,
   // if an existing element is not provided...
   var View = Backbone.View = function(options) {
+    typeof this.properties === "function" && this.properties();
     this.cid = _.uniqueId('view');
 
     if (options) Object.keys(options).forEach(function(key) {
@@ -1460,6 +1463,7 @@ if (utilExists('each')) {
   // matched. Creating a new one sets its `routes` hash, if not set statically.
   var Router = Backbone.Router = function(options) {
     options || (options = {});
+    typeof this.properties === "function" && this.properties();
     if (options.routes) this.routes = options.routes;
     this._bindRoutes();
     this.initialize.apply(this, arguments);
