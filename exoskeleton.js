@@ -378,7 +378,7 @@ var Events = Backbone.Events = {
     for (var id in listeningTo) {
       obj = listeningTo[id];
       obj.off(name, callback, this);
-      if (remove || !Object.keys(obj._events).length) delete this._listeningTo[id];
+      if (remove || !obj._events || !Object.keys(obj._events).length) delete this._listeningTo[id];
     }
     return this;
   }
