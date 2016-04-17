@@ -2,7 +2,7 @@
 
 Exoskeleton is a faster and leaner Backbone for your HTML5 apps.
 
-http://exosjs.com
+http://paulmillr.com/exoskeleton/
 
 ## What already works
 All features you need for real-world app are working.
