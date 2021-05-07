@@ -1,5 +1,9 @@
 # Exoskeleton
 
+[![No Maintenance Intended](http://unmaintained.tech/badge.svg)](http://unmaintained.tech/)
+
+> WARNING - THIS PROJECT IS NO LONGER MAINTAINED!!!
+
 Exoskeleton is a faster and leaner Backbone for your HTML5 apps.
 
 http://exosjs.com
